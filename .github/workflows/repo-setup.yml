@@ -1,0 +1,94 @@
+name: Repository Setup
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/repo-setup.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  setup-branches:
+    name: Create develop and hotfix branches
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create develop branch
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // Get main branch SHA
+            const mainRef = await github.rest.git.getRef({
+              owner, repo,
+              ref: 'heads/main',
+            });
+            const mainSha = mainRef.data.object.sha;
+
+            // Create develop branch if it doesn't exist
+            try {
+              await github.rest.git.getRef({ owner, repo, ref: 'heads/develop' });
+              console.log('develop branch already exists');
+            } catch (e) {
+              await github.rest.git.createRef({
+                owner, repo,
+                ref: 'refs/heads/develop',
+                sha: mainSha,
+              });
+              console.log('develop branch created');
+            }
+
+            // Create hotfix branch if it doesn't exist
+            try {
+              await github.rest.git.getRef({ owner, repo, ref: 'heads/hotfix' });
+              console.log('hotfix branch already exists');
+            } catch (e) {
+              await github.rest.git.createRef({
+                owner, repo,
+                ref: 'refs/heads/hotfix',
+                sha: mainSha,
+              });
+              console.log('hotfix branch created');
+            }
+
+  setup-branch-protection:
+    name: Enable branch protection on main
+    runs-on: ubuntu-latest
+    needs: setup-branches
+    steps:
+      - name: Protect main branch
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // NOTE: The context 'build' must match the job name in .github/workflows/ci.yml
+            await github.rest.repos.updateBranchProtection({
+              owner,
+              repo,
+              branch: 'main',
+              required_status_checks: {
+                strict: true,
+                contexts: ['build'],
+              },
+              // false allows admins to bypass in emergencies while enforcing for all others
+              enforce_admins: false,
+              required_pull_request_reviews: {
+                required_approving_review_count: 1,
+                dismiss_stale_reviews: true,
+              },
+              restrictions: null,
+              allow_force_pushes: false,
+              allow_deletions: false,
+            });
+            console.log('Branch protection enabled on main');
