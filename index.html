@@ -5,17 +5,88 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>VitalAI Dashboard</h1>
+    <h1>💜 VitalAI Dashboard</h1>
 
+    <!-- MEAL LOGGER -->
     <div class="card">
-        <h3>Log Meal</h3>
-        <input type="text" placeholder="Food item">
-        <input type="number" placeholder="Calories">
-        <button onclick="alert('Logged!')">Save</button>
+        <h3>🍽️ Log Meal</h3>
+        <input type="text" id="meal-food" placeholder="Food item">
+        <input type="number" id="meal-cals" placeholder="Calories" min="0">
+        <input type="number" id="meal-protein" placeholder="Protein (g)" min="0">
+        <button onclick="logMeal()">Save Meal</button>
+        <div id="meal-ai" class="ai-response hidden"></div>
     </div>
 
-    <div class="card ai-advice">
-        <strong>AI Advice:</strong> Your protein is low today. Consider adding chicken.
+    <!-- WORKOUT LOGGER -->
+    <div class="card">
+        <h3>💪 Log Workout</h3>
+        <input type="text" id="workout-type" placeholder="Exercise (e.g., Running)">
+        <input type="number" id="workout-duration" placeholder="Minutes" min="0" max="1440">
+        <select id="workout-intensity">
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+        </select>
+        <button onclick="logWorkout()">Save Workout</button>
+        <div id="workout-ai" class="ai-response hidden"></div>
     </div>
+
+    <!-- SLEEP LOGGER -->
+    <div class="card">
+        <h3>😴 Log Sleep</h3>
+        <input type="number" id="sleep-hours" placeholder="Hours slept" step="0.5" min="0" max="24">
+        <select id="sleep-quality">
+            <option value="poor">Poor</option>
+            <option value="fair">Fair</option>
+            <option value="good">Good</option>
+            <option value="excellent">Excellent</option>
+        </select>
+        <button onclick="logSleep()">Save Sleep</button>
+        <div id="sleep-ai" class="ai-response hidden"></div>
+    </div>
+
+    <!-- HYDRATION LOGGER -->
+    <div class="card">
+        <h3>💧 Log Hydration</h3>
+        <input type="number" id="water-ml" placeholder="ml consumed" min="0">
+        <button onclick="logWater()">Add Water</button>
+        <div id="water-ai" class="ai-response hidden"></div>
+    </div>
+
+    <!-- MOOD LOGGER -->
+    <div class="card">
+        <h3>😊 Mood Check-in</h3>
+        <input type="range" id="mood-rating" min="1" max="10" value="5">
+        <span id="mood-value">5</span>/10
+        <input type="text" id="mood-notes" placeholder="How are you feeling?">
+        <button onclick="logMood()">Save Mood</button>
+        <div id="mood-ai" class="ai-response hidden"></div>
+    </div>
+
+    <!-- WEEKLY INSIGHT BUTTON -->
+    <div class="card">
+        <h3>📊 Weekly Wellness Insight</h3>
+        <button onclick="getWeeklyInsight()">Get My AI Insight</button>
+        <div id="weekly-insight" class="ai-response hidden"></div>
+    </div>
+
+    <script>
+        document.getElementById('mood-rating').oninput = function() {
+            document.getElementById('mood-value').textContent = this.value;
+        };
+
+        function logMeal() { showAI('meal-ai', 'Analyzing your meal...'); }
+        function logWorkout() { showAI('workout-ai', 'Checking your recovery...'); }
+        function logSleep() { showAI('sleep-ai', 'Evaluating sleep quality...'); }
+        function logWater() { showAI('water-ai', 'Tracking hydration...'); }
+        function logMood() { showAI('mood-ai', 'Analyzing mood patterns...'); }
+        function getWeeklyInsight() { showAI('weekly-insight', 'Generating weekly report...'); }
+
+        function showAI(elementId, message) {
+            const el = document.getElementById(elementId);
+            el.textContent = message;
+            el.classList.remove('hidden');
+        }
+    </script>
 </body>
 </html>
