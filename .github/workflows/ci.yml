@@ -17,5 +17,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Run checks
-        run: echo "CI checks passed."
+      - name: Build Docker image
+        run: docker build -t vitalai .
+
+      - name: Run container
+        run: docker run -d -p 8080:80 --name vitalai-container vitalai
+
+      - name: Wait for container
+        run: sleep 5
+
+      - name: Test health endpoint
+        run: curl -f http://localhost:8080 || exit 1
+
+      - name: Stop container
+        run: docker stop vitalai-container && docker rm vitalai-container
