@@ -1,0 +1,261 @@
+name: Create Week 12 Issues
+
+on:
+  workflow_dispatch:
+
+jobs:
+  create-issues:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Create milestone – Week 12
+        run: |
+          gh api repos/$REPO/milestones \
+            --method POST \
+            -f title="Week 12 | Core Development & CI Pipeline" \
+            -f state="open" || true
+
+      - name: Ensure label – devops
+        run: |
+          gh api repos/$REPO/labels \
+            --method POST \
+            -f name="devops" \
+            -f color="0052cc" \
+            -f description="DevOps and infrastructure tasks" || true
+
+      - name: Ensure label – testing
+        run: |
+          gh api repos/$REPO/labels \
+            --method POST \
+            -f name="testing" \
+            -f color="e4e669" \
+            -f description="Test coverage and quality assurance" || true
+
+      - name: Get Week 12 milestone number
+        id: milestone
+        run: |
+          MILESTONE_NUMBER=$(gh api repos/$REPO/milestones \
+            --jq '.[] | select(.title | startswith("Week 12")) | .number' | head -1)
+          echo "number=$MILESTONE_NUMBER" >> $GITHUB_OUTPUT
+
+      - name: Issue 9 – Implement JWT Auth Routes
+        run: |
+          gh issue create \
+            --repo "$REPO" \
+            --title "Implement JWT Auth Routes" \
+            --label "enhancement" \
+            --milestone "Week 12 | Core Development & CI Pipeline" \
+            --body "## Description
+          Create secure authentication endpoints to allow user-specific data isolation in MongoDB.
+
+          ## Definition of Done
+          - \`POST /api/register\` successfully hashes passwords and saves the user to MongoDB.
+          - \`POST /api/login\` returns a valid JWT token.
+          - Protected routes return \`401\` if a valid token is missing.
+
+          **Branch:** \`feature/jwt-auth-routes\`
+          **Milestone:** Week 12 | Core Development & CI Pipeline
+          **Assigned to:** Member 1"
+
+      - name: Issue 10 – Implement CRUD Endpoints for 5 Log Types
+        run: |
+          gh issue create \
+            --repo "$REPO" \
+            --title "Implement CRUD Endpoints for 5 Log Types" \
+            --label "enhancement" \
+            --milestone "Week 12 | Core Development & CI Pipeline" \
+            --body "## Description
+          Develop backend logic for Meal, Workout, Sleep, Hydration, and Mood logs.
+
+          ## Definition of Done
+          - Endpoints handle \`POST\` (create) and \`GET\` (read) operations.
+          - Data is scoped to the logged-in user via JWT.
+          - API responses follow the JSON contract agreed in Issue #10 comments.
+
+          **Branch:** \`feature/crud-log-endpoints\`
+          **Milestone:** Week 12 | Core Development & CI Pipeline
+          **Assigned to:** Member 1"
+
+      - name: Issue 11 – Build Data Aggregation Utility
+        run: |
+          gh issue create \
+            --repo "$REPO" \
+            --title "Build Data Aggregation Utility" \
+            --label "enhancement" \
+            --milestone "Week 12 | Core Development & CI Pipeline" \
+            --body "## Description
+          Create a helper function to fetch the last 7 days of logs to serve as context for the AI.
+
+          ## Definition of Done
+          - Function returns a structured summary (e.g., daily calorie totals, sleep averages).
+          - Output schema is documented for Member 2 to use in prompt engineering.
+
+          **Branch:** \`feature/data-aggregation-utility\`
+          **Milestone:** Week 12 | Core Development & CI Pipeline
+          **Assigned to:** Member 1"
+
+      - name: Issue 12 – Build Shared Gemini Prompt-Builder Utility
+        run: |
+          gh issue create \
+            --repo "$REPO" \
+            --title "Build Shared Gemini Prompt-Builder Utility" \
+            --label "AI-Feature" \
+            --milestone "Week 12 | Core Development & CI Pipeline" \
+            --body "## Description
+          Develop a centralized utility to construct prompts for Gemini 2.5 Flash using user context.
+
+          ## Definition of Done
+          - Utility combines 7-day history with the new log entry.
+          - Prompts include instructions for a \"first-person, 2–3 sentence\" persona.
+
+          **Branch:** \`feature/gemini-prompt-builder\`
+          **Milestone:** Week 12 | Core Development & CI Pipeline
+          **Assigned to:** Member 2"
+
+      - name: Issue 13 – Wire Reactive AI Hooks to Log Endpoints
+        run: |
+          gh issue create \
+            --repo "$REPO" \
+            --title "Wire Reactive AI Hooks to Log Endpoints" \
+            --label "AI-Feature" \
+            --milestone "Week 12 | Core Development & CI Pipeline" \
+            --body "## Description
+          Trigger the Gemini API after each log save to provide immediate feedback.
+
+          ## Definition of Done
+          - Log responses include a \`reaction\` field containing the AI message.
+          - Implementation includes a 3-second timeout and a null fallback for resilience.
+
+          **Branch:** \`feature/reactive-ai-hooks\`
+          **Milestone:** Week 12 | Core Development & CI Pipeline
+          **Assigned to:** Member 2"
+
+      - name: Issue 14 – Implement AI Wellness Insights Endpoint
+        run: |
+          gh issue create \
+            --repo "$REPO" \
+            --title "Implement AI Wellness Insights Endpoint" \
+            --label "AI-Feature" \
+            --milestone "Week 12 | Core Development & CI Pipeline" \
+            --body "## Description
+          Create \`GET /api/insights/weekly\` for a comprehensive multi-domain analysis.
+
+          ## Definition of Done
+          - Returns a JSON object with 2 positives, 1 concern, and 3 suggestions.
+          - Uses Gemini 2.5 Flash with a large context window.
+
+          **Branch:** \`feature/ai-wellness-insights\`
+          **Milestone:** Week 12 | Core Development & CI Pipeline
+          **Assigned to:** Member 2"
+
+      - name: Issue 15 – Write Pytest Suite (15+ Tests)
+        run: |
+          gh issue create \
+            --repo "$REPO" \
+            --title "Write Pytest Suite (15+ Tests)" \
+            --label "testing" \
+            --milestone "Week 12 | Core Development & CI Pipeline" \
+            --body "## Description
+          Create a test suite to meet the mandatory unit test requirement.
+
+          ## Definition of Done
+          - Minimum 15 green tests covering Auth, CRUD, and AI parsing.
+          - Tests run successfully locally and are included in CI.
+
+          **Branch:** \`feature/pytest-suite\`
+          **Milestone:** Week 12 | Core Development & CI Pipeline
+          **Assigned to:** Member 2"
+
+      - name: Issue 16 – Configure GitHub Actions CI Workflow
+        run: |
+          gh issue create \
+            --repo "$REPO" \
+            --title "Configure GitHub Actions CI Workflow" \
+            --label "devops" \
+            --milestone "Week 12 | Core Development & CI Pipeline" \
+            --body "## Description
+          Automate testing and image building on every push and PR.
+
+          ## Definition of Done
+          - Workflow includes: checkout, setup Python, install deps, lint (flake8), run pytest, and Docker build.
+          - A smoke test verifies the \`/health\` endpoint inside the container.
+
+          **Branch:** \`feature/ci-workflow\`
+          **Milestone:** Week 12 | Core Development & CI Pipeline
+          **Assigned to:** Member 1"
+
+      - name: Issue 17 – Build 5 Frontend Log Forms
+        run: |
+          gh issue create \
+            --repo "$REPO" \
+            --title "Build 5 Frontend Log Forms" \
+            --label "enhancement" \
+            --milestone "Week 12 | Core Development & CI Pipeline" \
+            --body "## Description
+          Create responsive HTML/JS forms for all health log categories.
+
+          ## Definition of Done
+          - Forms use \`fetch()\` to send data to the backend with JWT headers.
+          - Success and error messages are displayed clearly.
+
+          **Branch:** \`feature/frontend-log-forms\`
+          **Milestone:** Week 12 | Core Development & CI Pipeline
+          **Assigned to:** Member 3"
+
+      - name: Issue 18 – Build Reusable AI Reaction Notification Component
+        run: |
+          gh issue create \
+            --repo "$REPO" \
+            --title "Build Reusable AI Reaction Notification Component" \
+            --label "enhancement" \
+            --milestone "Week 12 | Core Development & CI Pipeline" \
+            --body "## Description
+          Create a UI card that renders the reactive AI feedback post-interaction.
+
+          ## Definition of Done
+          - Component populates dynamically from the API's \`reaction\` field.
+          - Includes a skeleton loader during Gemini inference delays.
+
+          **Branch:** \`feature/ai-reaction-component\`
+          **Milestone:** Week 12 | Core Development & CI Pipeline
+          **Assigned to:** Member 3"
+
+      - name: Issue 19 – Build Dashboard Page with Chart.js
+        run: |
+          gh issue create \
+            --repo "$REPO" \
+            --title "Build Dashboard Page with Chart.js" \
+            --label "enhancement" \
+            --milestone "Week 12 | Core Development & CI Pipeline" \
+            --body "## Description
+          Implement a visual summary of the user's weekly health trends.
+
+          ## Definition of Done
+          - Charts display calories, sleep, mood, and hydration correctly.
+          - Dashboard updates automatically after a new log is added.
+
+          **Branch:** \`feature/dashboard-chartjs\`
+          **Milestone:** Week 12 | Core Development & CI Pipeline
+          **Assigned to:** Member 3"
+
+      - name: Issue 20 – Week 12 Standup Tracking Issue
+        run: |
+          gh issue create \
+            --repo "$REPO" \
+            --title "Week 12 Standup Tracking Issue" \
+            --label "documentation" \
+            --milestone "Week 12 | Core Development & CI Pipeline" \
+            --body "## Description
+          Daily log of progress, next steps, and blockers.
+
+          ## Definition of Done
+          - Every member posts one brief update per day.
+          - Blockers are flagged and addressed by the team.
+
+          **Milestone:** Week 12 | Core Development & CI Pipeline
+          **Assigned to:** All Members"
