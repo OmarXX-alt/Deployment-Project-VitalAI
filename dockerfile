@@ -12,9 +12,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Since Render is in use: Expose the Port the application will run on
-ENV PORT=8000
+ENV PORT=5000
 EXPOSE $PORT
 
 # Using gunicron for production, running a shell to resolve $PORT at runtime
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:$PORT --workers 2 main.app:create_app()"]
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:$PORT --workers 2 main.app:app"]
 
