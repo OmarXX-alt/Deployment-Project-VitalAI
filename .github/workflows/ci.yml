@@ -70,7 +70,7 @@ jobs:
           docker run --detach \
             --name test-container \
             --publish 5000:5000 \
-            ${{ env.IMAGE_NAME }}:ci-${{ github.sha }}:latest
+            ci-${{ github.sha }}:latest
  
           echo "Waiting for container to become ready..."
           sleep 5
@@ -88,8 +88,8 @@ jobs:
             fi
             if [ "$i" -eq 10 ]; then
               echo "Health check failed after 10 attempts."
-              docker logs flask-smoke
-              docker stop flask-smoke
+              docker logs test-container
+              docker stop test-container
               exit 1
             fi
             sleep 1
