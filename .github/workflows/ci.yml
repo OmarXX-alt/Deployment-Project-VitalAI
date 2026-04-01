@@ -1,12 +1,15 @@
 name: CI
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
+      - Develop
   pull_request:
     branches:
       - main
+      - Develop
 
 jobs:
   ## Job 1: Lint, test, build, smoke test, and push Docker image

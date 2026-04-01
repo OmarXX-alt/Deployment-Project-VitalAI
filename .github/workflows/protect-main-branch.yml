@@ -6,8 +6,6 @@ on:
 jobs:
   protect-main:
     runs-on: ubuntu-latest
-    permissions:
-      administration: write
     steps:
       - name: Apply branch protection rules to main
         uses: actions/github-script@v7
