@@ -13,6 +13,8 @@ jobs:
   build-and-test:
     name: Lint · Test · Build · Smoke Test · Push
     runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: vitalai
  
     steps:
       # ── Step 1: Checkout ────────────────────────────────────────────────────
@@ -64,9 +66,8 @@ jobs:
       - name: Build Docker image
         run: |
           docker build \
-            --tag ${{ env.IMAGE_NAME }}:ci-${{ github.sha }} \
-            --tag ${{ env.IMAGE_NAME }}:latest \
-            --label "git-sha=${{ github.sha }}" \
+            -t $IMAGE_NAME:${{ github.sha }} \
+            -t $IMAGE_NAME:latest \
             .
  
       # ── Step 8: Smoke test – start container & probe health endpoint ─────────
@@ -75,7 +76,7 @@ jobs:
           docker run --detach \
             --name test-container \
             --publish 5000:5000 \
-            ${{ env.IMAGE_NAME }}:ci-${{ github.sha }}:lastest
+            ${{ env.IMAGE_NAME }}:ci-${{ github.sha }}:latest
  
           echo "Waiting for container to become ready..."
           sleep 5
