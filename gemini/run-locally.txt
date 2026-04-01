@@ -1,0 +1,4 @@
+To test the file first run:
+
+$env:GEMINI_KEY="your_key_here"
+python ./test-ai.py         Change to the file locaiton
