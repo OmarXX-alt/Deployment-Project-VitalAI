@@ -17,7 +17,7 @@ jobs:
     name: Lint · Test · Build · Smoke Test · Push
     runs-on: ubuntu-latest
     env:
-      IMAGE_NAME: vitalai
+      IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/vitalai
  
     steps:
       # ── Step 1: Checkout ────────────────────────────────────────────────────
@@ -70,7 +70,7 @@ jobs:
           docker run --detach \
             --name test-container \
             --publish 5000:5000 \
-            ci-${{ github.sha }}:latest
+            $IMAGE_NAME:latest
  
           echo "Waiting for container to become ready..."
           sleep 5
@@ -83,7 +83,7 @@ jobs:
             echo "Attempt $i: HTTP $STATUS"
             if [ "$STATUS" -eq 200 ]; then
               echo "Health check passed."
-              docker stop flask-smoke
+              docker stop test-container
               break
             fi
             if [ "$i" -eq 10 ]; then
@@ -101,8 +101,8 @@ jobs:
       - name: Push image to Docker Hub
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          docker push ${{ env.IMAGE_NAME }}:ci-${{ github.sha }}
-          docker push ${{ env.IMAGE_NAME }}:latest
+          docker push $IMAGE_NAME:${{ github.sha }}
+          docker push $IMAGE_NAME:latest
       
       # ── Step 9: Lint / static analysis ──────────────────────────────────────
       - name: Run linter (flake8)
