@@ -17,7 +17,7 @@ jobs:
     name: Lint · Test · Build · Smoke Test · Push
     runs-on: ubuntu-latest
     env:
-      IMAGE_NAME: vitalai
+      IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/vitalai
  
     steps:
       # ── Step 1: Checkout ────────────────────────────────────────────────────
@@ -37,22 +37,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
  
-      # ── Step 4: Lint / static analysis ──────────────────────────────────────
-      - name: Run linter (flake8)
-        run: |
-          pip install flake8
-          # Hard stop on syntax errors or undefined names
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          # Style pass with a generous 120-char line limit
-          flake8 . --count --max-line-length=120 --statistics
- 
-      # ── Step 5: Unit tests ───────────────────────────────────────────────────
+      # ── Step 4: Unit tests ───────────────────────────────────────────────────
       - name: Run unit tests (pytest)
         run: |
           pip install pytest pytest-cov
           pytest --cov=. --cov-report=term-missing -v
  
-      # ── Step 6: Log in to Docker Hub ────────────────────────────────────────
+      # ── Step 5: Log in to Docker Hub ────────────────────────────────────────
       # Secrets required in GitHub → Settings → Secrets → Actions:
       #   DOCKERHUB_USERNAME  – your Docker Hub username
       #   DOCKERHUB_TOKEN     – a Docker Hub access token (not your password)
@@ -62,7 +53,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
  
-      # ── Step 7: Build Docker image ───────────────────────────────────────────
+      # ── Step 6: Build Docker image ───────────────────────────────────────────
       # Two tags are applied:
       #   :ci-<sha>  – immutable, pinned to this exact commit
       #   :latest    – floating tag, updated on every main push
@@ -73,13 +64,13 @@ jobs:
             -t $IMAGE_NAME:latest \
             .
  
-      # ── Step 8: Smoke test – start container & probe health endpoint ─────────
+      # ── Step 7: Smoke test – start container & probe health endpoint ─────────
       - name: Smoke test – health endpoint
         run: |
           docker run --detach \
             --name test-container \
             --publish 5000:5000 \
-            ${{ env.IMAGE_NAME }}:ci-${{ github.sha }}:latest
+            $IMAGE_NAME:latest
  
           echo "Waiting for container to become ready..."
           sleep 5
@@ -92,23 +83,32 @@ jobs:
             echo "Attempt $i: HTTP $STATUS"
             if [ "$STATUS" -eq 200 ]; then
               echo "Health check passed."
-              docker stop flask-smoke
+              docker stop test-container
               break
             fi
             if [ "$i" -eq 10 ]; then
               echo "Health check failed after 10 attempts."
-              docker logs flask-smoke
-              docker stop flask-smoke
+              docker logs test-container
+              docker stop test-container
               exit 1
             fi
             sleep 1
           done
  
-      # ── Step 9: Push to Docker Hub ───────────────────────────────────────────
+      # ── Step 8: Push to Docker Hub ───────────────────────────────────────────
       # Runs only on direct pushes to main (skipped for pull requests so that
       # unreviewed code is never published to the registry).
       - name: Push image to Docker Hub
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          docker push ${{ env.IMAGE_NAME }}:ci-${{ github.sha }}
-          docker push ${{ env.IMAGE_NAME }}:latest
+          docker push $IMAGE_NAME:${{ github.sha }}
+          docker push $IMAGE_NAME:latest
+      
+      # ── Step 9: Lint / static analysis ──────────────────────────────────────
+      - name: Run linter (flake8)
+        run: |
+          pip install flake8
+          # Hard stop on syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Style pass with a generous 120-char line limit
+          flake8 . --count --max-line-length=120 --statistics
