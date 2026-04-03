@@ -2,7 +2,7 @@
 FROM python:3.11-slim AS base
 
 # - Set the working directory in the container
-WORKDIR /main/app
+WORKDIR /main/server/app
 # Copy requirements.txt to the working directory, saved as a separate layer for better caching of dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

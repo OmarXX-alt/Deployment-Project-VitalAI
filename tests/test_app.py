@@ -3,7 +3,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from main.application.app import app
+from main.server.app import app
 
 
 def test_index_route_returns_html():
