@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | VitalAI</title>
+    <link rel="stylesheet" href="/static/styles.css"></head>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>VitalAI</h1>
+            <p>Your AI-powered health companion</p>
+        </div>
+        
+        <div class="form-container">
+            <div id="error-message" class="error-message"></div>
+            <div id="success-message" class="success-message"></div>
+            
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required placeholder="you@example.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required placeholder="••••••••">
+                </div>
+                
+                <button type="submit">Log In →</button>
+            </form>
+            
+            <div class="link">
+                Don't have an account? <a href="/register">Sign up for free</a>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            
+            // Hide any previous messages
+            document.getElementById('error-message').style.display = 'none';
+            document.getElementById('success-message').style.display = 'none';
+            
+            // Validate inputs
+            if (!email || !password) {
+                document.getElementById('error-message').textContent = '❌ Please enter both email and password.';
+                document.getElementById('error-message').style.display = 'block';
+                return;
+            }
+            
+            // TODO: Connect to backend API after Flask auth routes are ready
+            // This will be replaced with actual fetch to /api/login
+            console.log('Login attempt:', { email, password });
+            
+            // Show success message (temporary)
+            document.getElementById('success-message').textContent = '✓ Login successful! Redirecting to dashboard...';
+            document.getElementById('success-message').style.display = 'block';
+            
+            // Simulate redirect (will be replaced with actual auth)
+            setTimeout(() => {
+                window.location.href = '/dashboard';
+            }, 1500);
+        });
+    </script>
+</body>
+</html>
