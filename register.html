@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up | VitalAI</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✨ Create Account</h1>
+            <p>Start your wellness journey with AI</p>
+        </div>
+        
+        <div class="form-container">
+            <div id="error-message" class="error-message"></div>
+            <div id="success-message" class="success-message"></div>
+            
+            <form id="register-form">
+                <div class="form-group">
+                    <label for="displayName">Display Name</label>
+                    <input type="text" id="displayName" name="displayName" required placeholder="How should we call you?">
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required placeholder="you@example.com">
+                    <div class="info-text">We'll never share your email with anyone else.</div>
+                </div>
+                
+                <div class="row">
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required placeholder="At least 6 characters">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="••••••••">
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="form-group">
+                        <label for="calorieTarget">Daily Calorie Target</label>
+                        <input type="number" id="calorieTarget" name="calorieTarget" placeholder="2000" value="2000">
+                        <div class="info-text">Optional · Default: 2000 kcal</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="hydrationTarget">Daily Hydration Goal (ml)</label>
+                        <input type="number" id="hydrationTarget" name="hydrationTarget" placeholder="2500" value="2500">
+                        <div class="info-text">Optional · Default: 2500 ml</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="wellnessGoal">
+                        Wellness Goal 
+                        <span class="optional-badge">Optional</span>
+                    </label>
+                    <select id="wellnessGoal" name="wellnessGoal">
+                        <option value="">Select a goal (optional)</option>
+                        <option value="lose_weight">Lose Weight</option>
+                        <option value="build_muscle">Build Muscle</option>
+                        <option value="improve_endurance">Improve Endurance</option>
+                        <option value="better_sleep">Better Sleep</option>
+                        <option value="reduce_stress">Reduce Stress</option>
+                        <option value="general_health">General Health</option>
+                    </select>
+                </div>
+                
+                <button type="submit">Create Account →</button>
+            </form>
+            
+            <div class="link">
+                Already have an account? <a href="/login">Sign in</a>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('register-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            // Hide previous messages
+            document.getElementById('error-message').style.display = 'none';
+            document.getElementById('success-message').style.display = 'none';
+            
+            // Validate passwords match
+            if (password !== confirmPassword) {
+                document.getElementById('error-message').textContent = '❌ Passwords do not match. Please try again.';
+                document.getElementById('error-message').style.display = 'block';
+                return;
+            }
+            
+            // Validate password length
+            if (password.length < 6) {
+                document.getElementById('error-message').textContent = '❌ Password must be at least 6 characters long.';
+                document.getElementById('error-message').style.display = 'block';
+                return;
+            }
+            
+            // Validate display name
+            const displayName = document.getElementById('displayName').value.trim();
+            if (displayName === '') {
+                document.getElementById('error-message').textContent = '❌ Please enter a display name.';
+                document.getElementById('error-message').style.display = 'block';
+                return;
+            }
+            
+            // Validate email
+            const email = document.getElementById('email').value.trim();
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailPattern.test(email)) {
+                document.getElementById('error-message').textContent = '❌ Please enter a valid email address.';
+                document.getElementById('error-message').style.display = 'block';
+                return;
+            }
+            
+            // Get all form values
+            const formData = {
+                displayName: displayName,
+                email: email,
+                password: password,
+                calorieTarget: parseInt(document.getElementById('calorieTarget').value) || 2000,
+                hydrationTarget: parseInt(document.getElementById('hydrationTarget').value) || 2500,
+                wellnessGoal: document.getElementById('wellnessGoal').value || null
+            };
+            
+            // TODO: Connect to backend API after Flask auth routes are ready
+            // This will be replaced with actual fetch to /api/register
+            console.log('Registration data:', formData);
+            
+            // Show success message
+            document.getElementById('success-message').textContent = '✓ Account created successfully! Redirecting to login...';
+            document.getElementById('success-message').style.display = 'block';
+            
+            // Simulate redirect to login after successful registration
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 1500);
+        });
+        
+        // Real-time password match validation
+        const passwordInput = document.getElementById('password');
+        const confirmInput = document.getElementById('confirmPassword');
+        
+        function validatePasswordMatch() {
+            if (confirmInput.value.length > 0) {
+                if (passwordInput.value !== confirmInput.value) {
+                    confirmInput.style.borderColor = '#c33';
+                } else {
+                    confirmInput.style.borderColor = '#2c7a4d';
+                }
+            } else {
+                confirmInput.style.borderColor = '#e0e0e0';
+            }
+        }
+        
+        function validatePasswordStrength() {
+            if (passwordInput.value.length > 0 && passwordInput.value.length < 6) {
+                passwordInput.style.borderColor = '#c33';
+            } else if (passwordInput.value.length >= 6) {
+                passwordInput.style.borderColor = '#2c7a4d';
+            } else {
+                passwordInput.style.borderColor = '#e0e0e0';
+            }
+        }
+        
+        passwordInput.addEventListener('input', function() {
+            validatePasswordStrength();
+            validatePasswordMatch();
+        });
+        
+        confirmInput.addEventListener('input', validatePasswordMatch);
+    </script>
+</body>
+</html>
