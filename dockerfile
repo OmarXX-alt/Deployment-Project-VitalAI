@@ -16,5 +16,5 @@ ENV PORT=5000
 EXPOSE $PORT
 
 # Using gunicron for production, running a shell to resolve $PORT at runtime
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:$PORT --workers 2 main.app:app"]
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:$PORT --workers 2 main.server.app:app"]
 
