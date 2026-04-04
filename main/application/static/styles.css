@@ -3,7 +3,7 @@ body {
     max-width: 1200px; 
     margin: 0 auto; 
     padding: 20px; 
-    background: linear-gradient(135deg, #c066ea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #c066ea 0%, #000000 100%);
     min-height: 100vh;
 }
 
@@ -197,6 +197,126 @@ button:hover {
 
 .hidden {
     display: none;
+}
+
+/* ========== LANDING PAGE STYLES (index.html) ========== */
+
+.landing-hero {
+    text-align: center;
+    padding: 80px 40px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 30px;
+    margin-bottom: 40px;
+}
+
+.landing-hero h1 {
+    font-size: 56px;
+    margin-bottom: 16px;
+    color: white;
+}
+
+.landing-tagline {
+    font-size: 20px;
+    color: rgba(255,255,255,0.9);
+    margin-bottom: 32px;
+}
+
+.landing-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+.btn-login {
+    background: white;
+    color: #6a1b9a;
+    width: auto;
+    padding: 14px 40px;
+    font-size: 16px;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.btn-login:hover {
+    background: #f0e6ff;
+    transform: translateY(-2px);
+}
+
+.btn-signup {
+    background: transparent;
+    border: 2px solid white;
+    color: white;
+    width: auto;
+    padding: 14px 40px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.btn-signup:hover {
+    background: rgba(255,255,255,0.1);
+    transform: translateY(-2px);
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 25px;
+    margin-top: 40px;
+}
+
+.feature-card {
+    background: rgba(255,255,255,0.95);
+    border-radius: 20px;
+    padding: 25px;
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+}
+
+.feature-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+}
+
+.feature-card h3 {
+    color: #6a1b9a;
+    margin-bottom: 10px;
+    font-size: 20px;
+}
+
+.feature-card p {
+    color: #666;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.landing-footer {
+    text-align: center;
+    margin-top: 60px;
+    padding: 25px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 20px;
+    color: rgba(255,255,255,0.7);
+    font-size: 12px;
+}
+
+@media (max-width: 768px) {
+    .landing-hero {
+        padding: 40px 20px;
+    }
+    .landing-hero h1 {
+        font-size: 36px;
+    }
+    .landing-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    .landing-buttons button {
+        width: 200px;
+    }
 }
 
 /* Responsive */
