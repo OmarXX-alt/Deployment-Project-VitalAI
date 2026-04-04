@@ -95,7 +95,42 @@
             window.location.href = '/login';
         }
 
-        // ========== LOGGING FUNCTIONS (Issue #21) ==========
+        // ========== AI REACTION WITH SKELETON LOADER (Issue #22) ==========
+        
+        function showAILoader(elementId) {
+            const el = document.getElementById(elementId);
+            el.innerHTML = '<div class="skeleton-loader">🤖 AI is analyzing your data...</div>';
+            el.classList.remove('hidden');
+    
+            // Safety timeout - hide loader after 3 seconds if no response
+            setTimeout(() => {
+                if (el.innerHTML.includes('skeleton-loader')) {
+                    el.innerHTML = '⚠️ AI service unavailable. Please try again.';
+                    setTimeout(() => el.classList.add('hidden'), 3000);
+                }
+            }, 3000);
+        }
+
+        function showAIResponse(elementId, message) {
+            const el = document.getElementById(elementId);
+            el.innerHTML = message;
+            el.classList.remove('hidden');
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                el.classList.add('hidden');
+            }, 5000);
+        }
+
+        function showAIError(elementId, message) {
+            const el = document.getElementById(elementId);
+            el.innerHTML = message;
+            el.classList.remove('hidden');
+            setTimeout(() => {
+                el.classList.add('hidden');
+            }, 5000);
+        }
+
+        // ========== LOGGING FUNCTIONS WITH SKELETON LOADER ==========
         
         function logMeal() {
             const data = {
@@ -103,6 +138,9 @@
                 calories: parseInt(document.getElementById('meal-cals').value),
                 protein: parseInt(document.getElementById('meal-protein').value)
             };
+            
+            // Show skeleton loader immediately
+            showAILoader('meal-ai');
             
             fetch('/api/meals', {
                 method: 'POST',
@@ -114,10 +152,10 @@
             })
             .then(response => response.json())
             .then(data => {
-                showAI('meal-ai', data.reaction || '✅ Meal logged!');
+                showAIResponse('meal-ai', data.reaction || '✅ Meal logged!');
                 clearMealForm();
             })
-            .catch(error => showAI('meal-ai', '❌ Error logging meal'));
+            .catch(error => showAIError('meal-ai', '❌ Error logging meal'));
         }
 
         function logWorkout() {
@@ -126,6 +164,8 @@
                 duration: parseInt(document.getElementById('workout-duration').value),
                 intensity: document.getElementById('workout-intensity').value
             };
+            
+            showAILoader('workout-ai');
             
             fetch('/api/workouts', {
                 method: 'POST',
@@ -137,10 +177,10 @@
             })
             .then(response => response.json())
             .then(data => {
-                showAI('workout-ai', data.reaction || '💪 Workout logged!');
+                showAIResponse('workout-ai', data.reaction || '💪 Workout logged!');
                 clearWorkoutForm();
             })
-            .catch(error => showAI('workout-ai', '❌ Error logging workout'));
+            .catch(error => showAIError('workout-ai', '❌ Error logging workout'));
         }
 
         function logSleep() {
@@ -148,6 +188,8 @@
                 hours: parseFloat(document.getElementById('sleep-hours').value),
                 quality: document.getElementById('sleep-quality').value
             };
+            
+            showAILoader('sleep-ai');
             
             fetch('/api/sleep', {
                 method: 'POST',
@@ -159,16 +201,18 @@
             })
             .then(response => response.json())
             .then(data => {
-                showAI('sleep-ai', data.reaction || '😴 Sleep logged!');
+                showAIResponse('sleep-ai', data.reaction || '😴 Sleep logged!');
                 clearSleepForm();
             })
-            .catch(error => showAI('sleep-ai', '❌ Error logging sleep'));
+            .catch(error => showAIError('sleep-ai', '❌ Error logging sleep'));
         }
 
         function logWater() {
             const data = {
                 ml: parseInt(document.getElementById('water-ml').value)
             };
+            
+            showAILoader('water-ai');
             
             fetch('/api/hydration', {
                 method: 'POST',
@@ -180,10 +224,10 @@
             })
             .then(response => response.json())
             .then(data => {
-                showAI('water-ai', data.reaction || '💧 Water logged!');
+                showAIResponse('water-ai', data.reaction || '💧 Water logged!');
                 document.getElementById('water-ml').value = '';
             })
-            .catch(error => showAI('water-ai', '❌ Error logging water'));
+            .catch(error => showAIError('water-ai', '❌ Error logging water'));
         }
 
         function logMood() {
@@ -191,6 +235,8 @@
                 rating: parseInt(document.getElementById('mood-rating').value),
                 notes: document.getElementById('mood-notes').value
             };
+            
+            showAILoader('mood-ai');
             
             fetch('/api/moods', {
                 method: 'POST',
@@ -202,28 +248,23 @@
             })
             .then(response => response.json())
             .then(data => {
-                showAI('mood-ai', data.reaction || '😊 Mood logged!');
+                showAIResponse('mood-ai', data.reaction || '😊 Mood logged!');
                 document.getElementById('mood-notes').value = '';
             })
-            .catch(error => showAI('mood-ai', '❌ Error logging mood'));
+            .catch(error => showAIError('mood-ai', '❌ Error logging mood'));
         }
 
         function getWeeklyInsight() {
+            showAILoader('weekly-insight');
+            
             fetch('/api/insights/weekly', {
                 headers: { 'Authorization': 'Bearer ' + token }
             })
             .then(response => response.json())
             .then(data => {
-                showAI('weekly-insight', data.insight || 'No insights yet. Keep logging!');
+                showAIResponse('weekly-insight', data.insight || 'No insights yet. Keep logging!');
             })
-            .catch(error => showAI('weekly-insight', '❌ Error getting insights'));
-        }
-
-        function showAI(elementId, message) {
-            const el = document.getElementById(elementId);
-            el.textContent = message;
-            el.classList.remove('hidden');
-            setTimeout(() => el.classList.add('hidden'), 5000);
+            .catch(error => showAIError('weekly-insight', '❌ Error getting insights'));
         }
 
         // Helper functions to clear forms
