@@ -1,92 +1,361 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>VitalAI</title>
+    <title>VitalAI - Dashboard</title>
     <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <h1>VitalAI Dashboard</h1>
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h2>✨ VitalAI Dashboard</h2>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
 
-    <!-- MEAL LOGGER -->
-    <div class="card">
-        <h3>🍽️ Log Meal</h3>
-        <input type="text" id="meal-food" placeholder="Food item">
-        <input type="number" id="meal-cals" placeholder="Calories" min="0">
-        <input type="number" id="meal-protein" placeholder="Protein (g)" min="0">
-        <button onclick="logMeal()">Save Meal</button>
-        <div id="meal-ai" class="ai-response hidden"></div>
-    </div>
+        <!-- CHARTS SECTION (Issue #23) -->
+        <div class="charts-container">
+            <div class="chart-card">
+                <h3>📊 Weekly Calories</h3>
+                <canvas id="caloriesChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>😴 Weekly Sleep</h3>
+                <canvas id="sleepChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>💪 Weekly Workouts</h3>
+                <canvas id="workoutsChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>💧 Weekly Hydration</h3>
+                <canvas id="hydrationChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>😊 Weekly Mood</h3>
+                <canvas id="moodChart"></canvas>
+            </div>
+        </div>
 
-    <!-- WORKOUT LOGGER -->
-    <div class="card">
-        <h3>💪 Log Workout</h3>
-        <input type="text" id="workout-type" placeholder="Exercise (e.g., Running)">
-        <input type="number" id="workout-duration" placeholder="Minutes" min="0" max="1440">
-        <select id="workout-intensity">
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-        </select>
-        <button onclick="logWorkout()">Save Workout</button>
-        <div id="workout-ai" class="ai-response hidden"></div>
-    </div>
+        <!-- LOG FORMS SECTION -->
+        <div class="log-section">
+            <h3>Log Your Health Data</h3>
+            <div class="log-grid">
+                <!-- MEAL LOGGER -->
+                <div class="log-card">
+                    <h4>🍽️ Log Meal</h4>
+                    <input type="text" id="meal-food" placeholder="Food item">
+                    <input type="number" id="meal-cals" placeholder="Calories" min="0">
+                    <input type="number" id="meal-protein" placeholder="Protein (g)" min="0">
+                    <button onclick="logMeal()">Save Meal</button>
+                    <div id="meal-ai" class="ai-response hidden"></div>
+                </div>
 
-    <!-- SLEEP LOGGER -->
-    <div class="card">
-        <h3>😴 Log Sleep</h3>
-        <input type="number" id="sleep-hours" placeholder="Hours slept" step="0.5" min="0" max="24">
-        <select id="sleep-quality">
-            <option value="poor">Poor</option>
-            <option value="fair">Fair</option>
-            <option value="good">Good</option>
-            <option value="excellent">Excellent</option>
-        </select>
-        <button onclick="logSleep()">Save Sleep</button>
-        <div id="sleep-ai" class="ai-response hidden"></div>
-    </div>
+                <!-- WORKOUT LOGGER -->
+                <div class="log-card">
+                    <h4>💪 Log Workout</h4>
+                    <input type="text" id="workout-type" placeholder="Exercise">
+                    <input type="number" id="workout-duration" placeholder="Minutes" min="0">
+                    <select id="workout-intensity">
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                    <button onclick="logWorkout()">Save Workout</button>
+                    <div id="workout-ai" class="ai-response hidden"></div>
+                </div>
 
-    <!-- HYDRATION LOGGER -->
-    <div class="card">
-        <h3>💧 Log Hydration</h3>
-        <input type="number" id="water-ml" placeholder="ml consumed" min="0">
-        <button onclick="logWater()">Add Water</button>
-        <div id="water-ai" class="ai-response hidden"></div>
-    </div>
+                <!-- SLEEP LOGGER -->
+                <div class="log-card">
+                    <h4>😴 Log Sleep</h4>
+                    <input type="number" id="sleep-hours" placeholder="Hours slept" step="0.5" min="0" max="24">
+                    <select id="sleep-quality">
+                        <option value="poor">Poor</option>
+                        <option value="fair">Fair</option>
+                        <option value="good">Good</option>
+                        <option value="excellent">Excellent</option>
+                    </select>
+                    <button onclick="logSleep()">Save Sleep</button>
+                    <div id="sleep-ai" class="ai-response hidden"></div>
+                </div>
 
-    <!-- MOOD LOGGER -->
-    <div class="card">
-        <h3>😊 Mood Check-in</h3>
-        <input type="range" id="mood-rating" min="1" max="10" value="5">
-        <span id="mood-value">5</span>/10
-        <input type="text" id="mood-notes" placeholder="How are you feeling?">
-        <button onclick="logMood()">Save Mood</button>
-        <div id="mood-ai" class="ai-response hidden"></div>
-    </div>
+                <!-- HYDRATION LOGGER -->
+                <div class="log-card">
+                    <h4>💧 Log Hydration</h4>
+                    <input type="number" id="water-ml" placeholder="ml consumed" min="0">
+                    <button onclick="logWater()">Add Water</button>
+                    <div id="water-ai" class="ai-response hidden"></div>
+                </div>
 
-    <!-- WEEKLY INSIGHT BUTTON -->
-    <div class="card">
-        <h3>📊 Weekly Wellness Insight</h3>
-        <button onclick="getWeeklyInsight()">Get My AI Insight</button>
-        <div id="weekly-insight" class="ai-response hidden"></div>
+                <!-- MOOD LOGGER -->
+                <div class="log-card">
+                    <h4>😊 Mood Check-in</h4>
+                    <input type="range" id="mood-rating" min="1" max="10" value="5">
+                    <span id="mood-value">5</span>/10
+                    <input type="text" id="mood-notes" placeholder="How are you feeling?">
+                    <button onclick="logMood()">Save Mood</button>
+                    <div id="mood-ai" class="ai-response hidden"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- WEEKLY INSIGHT BUTTON -->
+        <div class="card">
+            <h3>📊 Weekly Wellness Insight</h3>
+            <button onclick="getWeeklyInsight()">Get My AI Insight</button>
+            <div id="weekly-insight" class="ai-response hidden"></div>
+        </div>
     </div>
 
     <script>
+        // Get token from localStorage
+        const token = localStorage.getItem('token');
+
+        // Check if user is logged in
+        if (!token) {
+            window.location.href = '/login';
+        }
+
+        // Mood slider display
         document.getElementById('mood-rating').oninput = function() {
             document.getElementById('mood-value').textContent = this.value;
         };
 
-        function logMeal() { showAI('meal-ai', 'Analyzing your meal...'); }
-        function logWorkout() { showAI('workout-ai', 'Checking your recovery...'); }
-        function logSleep() { showAI('sleep-ai', 'Evaluating sleep quality...'); }
-        function logWater() { showAI('water-ai', 'Tracking hydration...'); }
-        function logMood() { showAI('mood-ai', 'Analyzing mood patterns...'); }
-        function getWeeklyInsight() { showAI('weekly-insight', 'Generating weekly report...'); }
+        // Logout function
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+        }
+
+        // ========== CHART INITIALIZATION (Issue #23) ==========
+        let caloriesChart, sleepChart, workoutsChart, hydrationChart, moodChart;
+
+        function initCharts() {
+            const ctx1 = document.getElementById('caloriesChart').getContext('2d');
+            const ctx2 = document.getElementById('sleepChart').getContext('2d');
+            const ctx3 = document.getElementById('workoutsChart').getContext('2d');
+            const ctx4 = document.getElementById('hydrationChart').getContext('2d');
+            const ctx5 = document.getElementById('moodChart').getContext('2d');
+
+            caloriesChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{ label: 'Calories', data: [0,0,0,0,0,0,0], borderColor: '#7e57c2', backgroundColor: 'rgba(126,87,194,0.1)', tension: 0.3 }]
+                }
+            });
+
+            sleepChart = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{ label: 'Hours Slept', data: [0,0,0,0,0,0,0], backgroundColor: '#7e57c2' }]
+                }
+            });
+
+            workoutsChart = new Chart(ctx3, {
+                type: 'bar',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{ label: 'Workout (min)', data: [0,0,0,0,0,0,0], backgroundColor: '#b39ddb' }]
+                }
+            });
+
+            hydrationChart = new Chart(ctx4, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{ label: 'Water (ml)', data: [0,0,0,0,0,0,0], borderColor: '#2196f3', backgroundColor: 'rgba(33,150,243,0.1)', tension: 0.3 }]
+                }
+            });
+
+            moodChart = new Chart(ctx5, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{ label: 'Mood (1-10)', data: [0,0,0,0,0,0,0], borderColor: '#6a1b9a', backgroundColor: 'rgba(106,27,154,0.1)', tension: 0.3 }]
+                }
+            });
+        }
+
+        // Update charts with real data
+        function updateCharts() {
+            fetch('/api/weekly-summary', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.calories) caloriesChart.data.datasets[0].data = data.calories;
+                if (data.sleep) sleepChart.data.datasets[0].data = data.sleep;
+                if (data.workouts) workoutsChart.data.datasets[0].data = data.workouts;
+                if (data.hydration) hydrationChart.data.datasets[0].data = data.hydration;
+                if (data.mood) moodChart.data.datasets[0].data = data.mood;
+                
+                caloriesChart.update();
+                sleepChart.update();
+                workoutsChart.update();
+                hydrationChart.update();
+                moodChart.update();
+            })
+            .catch(error => console.error('Error updating charts:', error));
+        }
+
+        // ========== LOGGING FUNCTIONS (with auto chart update) ==========
+        
+        function logMeal() {
+            const data = {
+                food: document.getElementById('meal-food').value,
+                calories: parseInt(document.getElementById('meal-cals').value),
+                protein: parseInt(document.getElementById('meal-protein').value)
+            };
+            
+            fetch('/api/meals', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                showAI('meal-ai', data.reaction || '✅ Meal logged!');
+                updateCharts(); // ✅ Auto-update charts after log
+                clearMealForm();
+            })
+            .catch(error => showAI('meal-ai', '❌ Error logging meal'));
+        }
+
+        function logWorkout() {
+            const data = {
+                type: document.getElementById('workout-type').value,
+                duration: parseInt(document.getElementById('workout-duration').value),
+                intensity: document.getElementById('workout-intensity').value
+            };
+            
+            fetch('/api/workouts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                showAI('workout-ai', data.reaction || '💪 Workout logged!');
+                updateCharts(); // ✅ Auto-update charts after log
+                clearWorkoutForm();
+            })
+            .catch(error => showAI('workout-ai', '❌ Error logging workout'));
+        }
+
+        function logSleep() {
+            const data = {
+                hours: parseFloat(document.getElementById('sleep-hours').value),
+                quality: document.getElementById('sleep-quality').value
+            };
+            
+            fetch('/api/sleep', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                showAI('sleep-ai', data.reaction || '😴 Sleep logged!');
+                updateCharts(); // ✅ Auto-update charts after log
+                clearSleepForm();
+            })
+            .catch(error => showAI('sleep-ai', '❌ Error logging sleep'));
+        }
+
+        function logWater() {
+            const data = {
+                ml: parseInt(document.getElementById('water-ml').value)
+            };
+            
+            fetch('/api/hydration', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                showAI('water-ai', data.reaction || '💧 Water logged!');
+                updateCharts(); // ✅ Auto-update charts after log
+                document.getElementById('water-ml').value = '';
+            })
+            .catch(error => showAI('water-ai', '❌ Error logging water'));
+        }
+
+        function logMood() {
+            const data = {
+                rating: parseInt(document.getElementById('mood-rating').value),
+                notes: document.getElementById('mood-notes').value
+            };
+            
+            fetch('/api/moods', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                showAI('mood-ai', data.reaction || '😊 Mood logged!');
+                updateCharts(); // ✅ Auto-update charts after log
+                document.getElementById('mood-notes').value = '';
+            })
+            .catch(error => showAI('mood-ai', '❌ Error logging mood'));
+        }
+
+        function getWeeklyInsight() {
+            fetch('/api/insights/weekly', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            })
+            .then(response => response.json())
+            .then(data => {
+                showAI('weekly-insight', data.insight || 'No insights yet. Keep logging!');
+            })
+            .catch(error => showAI('weekly-insight', '❌ Error getting insights'));
+        }
 
         function showAI(elementId, message) {
             const el = document.getElementById(elementId);
             el.textContent = message;
             el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 5000);
         }
+
+        // Helper functions to clear forms
+        function clearMealForm() {
+            document.getElementById('meal-food').value = '';
+            document.getElementById('meal-cals').value = '';
+            document.getElementById('meal-protein').value = '';
+        }
+
+        function clearWorkoutForm() {
+            document.getElementById('workout-type').value = '';
+            document.getElementById('workout-duration').value = '';
+            document.getElementById('workout-intensity').value = 'low';
+        }
+
+        function clearSleepForm() {
+            document.getElementById('sleep-hours').value = '';
+            document.getElementById('sleep-quality').value = 'poor';
+        }
+
+        // Initialize charts when page loads
+        initCharts();
+        updateCharts();
     </script>
 </body>
 </html>
