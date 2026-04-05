@@ -1,9 +1,9 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from main.server.app import app
+from main.server.app import app  # noqa: E402
 
 
 def test_index_route_returns_html():

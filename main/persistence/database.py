@@ -5,6 +5,7 @@ from pymongo import MongoClient
 
 logger = logging.getLogger(__name__)
 
+
 class DatabaseConnection:
     def __init__(self):
         self.client = None
@@ -17,12 +18,12 @@ class DatabaseConnection:
         # Get MongoDB URI from environment variable or use default local connection
         mongo_uri = os.environ.get("MONGO_URI", "mongodb://localhost:27017/vital_ai")
         app.config.setdefault("MONGO_URI", mongo_uri)
-        
+
         # Initialize the MongoClient. The client maintains a connection pool internally.
         self.client = MongoClient(app.config["MONGO_URI"])
-        
+
         # Get the default database (extracted from URI) or fallback to 'vital_ai'
-        self.db = self.client.get_default_database(default='vital_ai')
+        self.db = self.client.get_default_database(default="vital_ai")
 
         # Test the connection to ensure it's successful
         try:
@@ -34,8 +35,10 @@ class DatabaseConnection:
         # Attach the database to the app context if needed
         app.db = self.db
 
+
 # Global instance to be imported and used across your application
 db = DatabaseConnection()
+
 
 def get_db():
     """
