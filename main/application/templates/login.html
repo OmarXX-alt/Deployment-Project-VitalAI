@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | VitalAI</title>
-    <link rel="stylesheet" href="/static/styles.css"></head>
+    <link rel="stylesheet" href="/main/application/static/styles.css">
 </head>
 <body>
     <div class="container">
@@ -20,7 +20,7 @@
             <form id="login-form">
                 <div class="form-group">
                     <label for="email">Email Address</label>
-                    <input type="email" id="email" name="email" required placeholder="you@example.com">
+                    <input type="email" id="email" name="email" required placeholder="you@gmail.com">
                 </div>
                 
                 <div class="form-group">
@@ -32,7 +32,7 @@
             </form>
             
             <div class="link">
-                Don't have an account? <a href="/register">Sign up for free</a>
+                Don't have an account? <a href="/main/application/templates/register.html">Sign up for free</a>
             </div>
         </div>
     </div>
@@ -50,23 +50,50 @@
             
             // Validate inputs
             if (!email || !password) {
-                document.getElementById('error-message').textContent = '❌ Please enter both email and password.';
+                document.getElementById('error-message').textContent = 'Please enter both email and password.';
                 document.getElementById('error-message').style.display = 'block';
                 return;
             }
             
-            // TODO: Connect to backend API after Flask auth routes are ready
-            // This will be replaced with actual fetch to /api/login
-            console.log('Login attempt:', { email, password });
-            
-            // Show success message (temporary)
-            document.getElementById('success-message').textContent = '✓ Login successful! Redirecting to dashboard...';
+            // Show loading message
+            document.getElementById('success-message').textContent = 'Logging in...';
             document.getElementById('success-message').style.display = 'block';
             
-            // Simulate redirect (will be replaced with actual auth)
-            setTimeout(() => {
-                window.location.href = '/dashboard';
-            }, 1500);
+            // REAL API CALL to backend
+            fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.token) {
+                    // Store token in localStorage
+                    localStorage.setItem('token', data.token);
+                    
+                    // Show success message
+                    document.getElementById('success-message').textContent = '✓ Login successful! Redirecting to dashboard...';
+                    
+                    // Redirect to dashboard
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 1000);
+                } else {
+                    // Show error from backend
+                    document.getElementById('error-message').textContent = data.message || 'Login failed. Please try again.';
+                    document.getElementById('error-message').style.display = 'block';
+                    document.getElementById('success-message').style.display = 'none';
+                }
+            })
+            .catch(error => {
+                // Handle network error
+                document.getElementById('error-message').textContent = 'Server error. Please try again later.';
+                document.getElementById('error-message').style.display = 'block';
+                document.getElementById('success-message').style.display = 'none';
+                console.error('Login error:', error);
+            });
         });
     </script>
 </body>
