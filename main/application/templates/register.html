@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up | VitalAI</title>
-    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="/main/application/static/styles.css">
 </head>
 <body>
     <div class="container">
@@ -25,7 +25,7 @@
                 
                 <div class="form-group">
                     <label for="email">Email Address</label>
-                    <input type="email" id="email" name="email" required placeholder="you@example.com">
+                    <input type="email" id="email" name="email" required placeholder="you@gmail.com">
                     <div class="info-text">We'll never share your email with anyone else.</div>
                 </div>
                 
@@ -44,13 +44,13 @@
                 <div class="row">
                     <div class="form-group">
                         <label for="calorieTarget">Daily Calorie Target</label>
-                        <input type="number" id="calorieTarget" name="calorieTarget" placeholder="2000" value="2000">
+                        <input type="number" id="calorieTarget" name="calorieTarget" placeholder="2000" value="2000" min="0" max="10000">
                         <div class="info-text">Optional · Default: 2000 kcal</div>
                     </div>
                     
                     <div class="form-group">
                         <label for="hydrationTarget">Daily Hydration Goal (ml)</label>
-                        <input type="number" id="hydrationTarget" name="hydrationTarget" placeholder="2500" value="2500">
+                        <input type="number" id="hydrationTarget" name="hydrationTarget" placeholder="2500" value="2500" min="0" max="10000">
                         <div class="info-text">Optional · Default: 2500 ml</div>
                     </div>
                 </div>
@@ -75,7 +75,7 @@
             </form>
             
             <div class="link">
-                Already have an account? <a href="/login">Sign in</a>
+                Already have an account? <a href="/main/application/templates/login.html">Sign in</a>
             </div>
         </div>
     </div>
@@ -93,7 +93,7 @@
             
             // Validate passwords match
             if (password !== confirmPassword) {
-                document.getElementById('error-message').textContent = '❌ Passwords do not match. Please try again.';
+                document.getElementById('error-message').textContent = 'Passwords do not match. Please try again.';
                 document.getElementById('error-message').style.display = 'block';
                 return;
             }
@@ -104,11 +104,26 @@
                 document.getElementById('error-message').style.display = 'block';
                 return;
             }
-            
+
+            // Validate password has at least one number
+            const hasNumber = /\d/.test(password);
+            if (!hasNumber) {
+                document.getElementById('error-message').textContent = '❌ Password must contain at least one number.';
+                document.getElementById('error-message').style.display = 'block';
+                return;
+            }
+
+            // Validate password has at least one special character
+            const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+            if (!hasSpecialChar) {
+                document.getElementById('error-message').textContent = '❌ Password must contain at least one special character (!@#$%^&*).';
+                document.getElementById('error-message').style.display = 'block';
+                return;
+            }
             // Validate display name
             const displayName = document.getElementById('displayName').value.trim();
             if (displayName === '') {
-                document.getElementById('error-message').textContent = '❌ Please enter a display name.';
+                document.getElementById('error-message').textContent = 'Please enter a display name.';
                 document.getElementById('error-message').style.display = 'block';
                 return;
             }
@@ -117,7 +132,7 @@
             const email = document.getElementById('email').value.trim();
             const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailPattern.test(email)) {
-                document.getElementById('error-message').textContent = '❌ Please enter a valid email address.';
+                document.getElementById('error-message').textContent = 'Please enter a valid email address.';
                 document.getElementById('error-message').style.display = 'block';
                 return;
             }
@@ -132,18 +147,47 @@
                 wellnessGoal: document.getElementById('wellnessGoal').value || null
             };
             
-            // TODO: Connect to backend API after Flask auth routes are ready
-            // This will be replaced with actual fetch to /api/register
-            console.log('Registration data:', formData);
-            
-            // Show success message
-            document.getElementById('success-message').textContent = '✓ Account created successfully! Redirecting to login...';
+            // Show loading message
+            document.getElementById('success-message').textContent = 'Creating account...';
             document.getElementById('success-message').style.display = 'block';
             
-            // Simulate redirect to login after successful registration
-            setTimeout(() => {
-                window.location.href = '/login';
-            }, 1500);
+            // REAL API CALL to backend
+            fetch('/api/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.token || data.success) {
+                    // Store token if returned
+                    if (data.token) {
+                        localStorage.setItem('token', data.token);
+                    }
+                    
+                    // Show success message
+                    document.getElementById('success-message').textContent = '✓ Account created successfully! Redirecting to dashboard...';
+                    
+                    // Redirect to dashboard
+                    setTimeout(() => {
+                        window.location.href = '/dashboard.html';
+                    }, 1000);
+                } else {
+                    // Show error from backend
+                    document.getElementById('error-message').textContent = data.message || 'Registration failed. Please try again.';
+                    document.getElementById('error-message').style.display = 'block';
+                    document.getElementById('success-message').style.display = 'none';
+                }
+            })
+            .catch(error => {
+                // Handle network error
+                document.getElementById('error-message').textContent = 'Server error. Please try again later.';
+                document.getElementById('error-message').style.display = 'block';
+                document.getElementById('success-message').style.display = 'none';
+                console.error('Registration error:', error);
+            });
         });
         
         // Real-time password match validation
@@ -155,10 +199,10 @@
                 if (passwordInput.value !== confirmInput.value) {
                     confirmInput.style.borderColor = '#c33';
                 } else {
-                    confirmInput.style.borderColor = '#2c7a4d';
+                    confirmInput.style.borderColor = '#7e57c2';
                 }
             } else {
-                confirmInput.style.borderColor = '#e0e0e0';
+                confirmInput.style.borderColor = '#b39ddb';
             }
         }
         
@@ -166,9 +210,9 @@
             if (passwordInput.value.length > 0 && passwordInput.value.length < 6) {
                 passwordInput.style.borderColor = '#c33';
             } else if (passwordInput.value.length >= 6) {
-                passwordInput.style.borderColor = '#2c7a4d';
+                passwordInput.style.borderColor = '#7e57c2';
             } else {
-                passwordInput.style.borderColor = '#e0e0e0';
+                passwordInput.style.borderColor = '#b39ddb';
             }
         }
         
