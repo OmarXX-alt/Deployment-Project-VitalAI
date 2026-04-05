@@ -1,5 +1,9 @@
+import logging
 import os
+
 from pymongo import MongoClient
+
+logger = logging.getLogger(__name__)
 
 class DatabaseConnection:
     def __init__(self):
@@ -22,11 +26,10 @@ class DatabaseConnection:
 
         # Test the connection to ensure it's successful
         try:
-            # The ismaster command is cheap and does not require auth.
-            self.client.admin.command('ping')
-            print("Successfully connected to MongoDB!")
+            self.client.admin.command("ping")
+            logger.debug("Successfully connected to MongoDB.")
         except Exception as e:
-            print(f"Failed to connect to MongoDB: {e}")
+            logger.error("Failed to connect to MongoDB: %s", e, exc_info=True)
 
         # Attach the database to the app context if needed
         app.db = self.db

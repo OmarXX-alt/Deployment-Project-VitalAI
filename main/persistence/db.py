@@ -1,7 +1,11 @@
+import logging
 import os
+
 import certifi
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure, ConfigurationError
+
+logger = logging.getLogger(__name__)
 
 
 class DatabaseConnection:
@@ -16,7 +20,7 @@ class DatabaseConnection:
         """
         mongo_uri = os.environ.get("MONGO_URI")
         if not mongo_uri:
-            print("! MONGO_URI not set; falling back to local MongoDB.")
+            logger.warning("MONGO_URI not set; falling back to local MongoDB.")
             mongo_uri = "mongodb://localhost:27017/vitalai"
         app.config.setdefault("MONGO_URI", mongo_uri)
 
@@ -33,13 +37,13 @@ class DatabaseConnection:
             # Use 'vitalai' as the default database
             self.db = self.client.get_default_database(default="vitalai")
 
-            print(f"✓ Connected to MongoDB — database: '{self.db.name}'")
+            logger.debug("Connected to MongoDB database=%s", self.db.name)
 
         except ConfigurationError as e:
-            print(f"✗ MongoDB configuration error (check your URI): {e}")
+            logger.error("MongoDB configuration error: %s", e, exc_info=True)
             raise
         except ConnectionFailure as e:
-            print(f"✗ Could not reach MongoDB (check network/credentials): {e}")
+            logger.error("Could not reach MongoDB: %s", e, exc_info=True)
             raise
 
         # Make db accessible via app context (app.db)
@@ -73,7 +77,7 @@ def _create_indexes(db):
     db["goal_plans"].create_index("user_id", unique=True)
     db["chat_sessions"].create_index([("user_id", 1), ("created_at", -1)])
 
-    print("✓ Indexes verified.")
+    logger.debug("Indexes verified.")
 
 
 # ── Global instance — import this across the app ──────────────────────────────
