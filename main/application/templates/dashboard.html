@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>VitalAI - Dashboard</title>
+    <link rel="stylesheet" href="/main/application/static/styles.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h2>VitalAI Dashboard</h2>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+
+        <!-- MEAL LOGGER -->
+        <div class="card">
+            <h3>🍽️ Log Meal</h3>
+            <input type="text" id="meal-food" placeholder="Food item">
+            <input type="number" id="meal-cals" placeholder="Calories" min="0">
+            <input type="number" id="meal-protein" placeholder="Protein (g)" min="0">
+            <button onclick="logMeal()">Save Meal</button>
+            <div id="meal-ai" class="ai-response hidden"></div>
+        </div>
+
+        <!-- WORKOUT LOGGER -->
+        <div class="card">
+            <h3>💪 Log Workout</h3>
+            <input type="text" id="workout-type" placeholder="Exercise (e.g., Running)">
+            <input type="number" id="workout-duration" placeholder="Minutes" min="0" max="1440">
+            <select id="workout-intensity">
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+            </select>
+            <button onclick="logWorkout()">Save Workout</button>
+            <div id="workout-ai" class="ai-response hidden"></div>
+        </div>
+
+        <!-- SLEEP LOGGER -->
+        <div class="card">
+            <h3>😴 Log Sleep</h3>
+            <input type="number" id="sleep-hours" placeholder="Hours slept" step="0.5" min="0" max="24">
+            <select id="sleep-quality">
+                <option value="poor">Poor</option>
+                <option value="fair">Fair</option>
+                <option value="good">Good</option>
+                <option value="excellent">Excellent</option>
+            </select>
+            <button onclick="logSleep()">Save Sleep</button>
+            <div id="sleep-ai" class="ai-response hidden"></div>
+        </div>
+
+        <!-- HYDRATION LOGGER -->
+        <div class="card">
+            <h3>💧 Log Hydration</h3>
+            <input type="number" id="water-ml" placeholder="ml consumed" min="0">
+            <button onclick="logWater()">Add Water</button>
+            <div id="water-ai" class="ai-response hidden"></div>
+        </div>
+
+        <!-- MOOD LOGGER -->
+        <div class="card">
+            <h3>😊 Mood Check-in</h3>
+            <input type="range" id="mood-rating" min="1" max="10" value="5">
+            <span id="mood-value">5</span>/10
+            <input type="text" id="mood-notes" placeholder="How are you feeling?">
+            <button onclick="logMood()">Save Mood</button>
+            <div id="mood-ai" class="ai-response hidden"></div>
+        </div>
+
+        <!-- WEEKLY INSIGHT BUTTON -->
+        <div class="card">
+            <h3>📊 Weekly Wellness Insight</h3>
+            <button onclick="getWeeklyInsight()">Get My AI Insight</button>
+            <div id="weekly-insight" class="ai-response hidden"></div>
+        </div>
+    </div>
+
+    <script>
+        // Get token from localStorage (set after login)
+        const token = localStorage.getItem('token');
+
+        // Check if user is logged in
+        if (!token) {
+            window.location.href = '/login';
+        }
+
+        // Mood slider display
+        document.getElementById('mood-rating').oninput = function() {
+            document.getElementById('mood-value').textContent = this.value;
+        };
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+        }
+
+        // ========== LOGGING FUNCTIONS (Issue #21) ==========
+        
+        function logMeal() {
+            const data = {
+                food: document.getElementById('meal-food').value,
+                calories: parseInt(document.getElementById('meal-cals').value),
+                protein: parseInt(document.getElementById('meal-protein').value)
+            };
+            
+            fetch('/api/meals', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                showAI('meal-ai', data.reaction || '✅ Meal logged!');
+                clearMealForm();
+            })
+            .catch(error => showAI('meal-ai', '❌ Error logging meal'));
+        }
+
+        function logWorkout() {
+            const data = {
+                type: document.getElementById('workout-type').value,
+                duration: parseInt(document.getElementById('workout-duration').value),
+                intensity: document.getElementById('workout-intensity').value
+            };
+            
+            fetch('/api/workouts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                showAI('workout-ai', data.reaction || '💪 Workout logged!');
+                clearWorkoutForm();
+            })
+            .catch(error => showAI('workout-ai', '❌ Error logging workout'));
+        }
+
+        function logSleep() {
+            const data = {
+                hours: parseFloat(document.getElementById('sleep-hours').value),
+                quality: document.getElementById('sleep-quality').value
+            };
+            
+            fetch('/api/sleep', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                showAI('sleep-ai', data.reaction || '😴 Sleep logged!');
+                clearSleepForm();
+            })
+            .catch(error => showAI('sleep-ai', '❌ Error logging sleep'));
+        }
+
+        function logWater() {
+            const data = {
+                ml: parseInt(document.getElementById('water-ml').value)
+            };
+            
+            fetch('/api/hydration', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                showAI('water-ai', data.reaction || '💧 Water logged!');
+                document.getElementById('water-ml').value = '';
+            })
+            .catch(error => showAI('water-ai', '❌ Error logging water'));
+        }
+
+        function logMood() {
+            const data = {
+                rating: parseInt(document.getElementById('mood-rating').value),
+                notes: document.getElementById('mood-notes').value
+            };
+            
+            fetch('/api/moods', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                showAI('mood-ai', data.reaction || '😊 Mood logged!');
+                document.getElementById('mood-notes').value = '';
+            })
+            .catch(error => showAI('mood-ai', '❌ Error logging mood'));
+        }
+
+        function getWeeklyInsight() {
+            fetch('/api/insights/weekly', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            })
+            .then(response => response.json())
+            .then(data => {
+                showAI('weekly-insight', data.insight || 'No insights yet. Keep logging!');
+            })
+            .catch(error => showAI('weekly-insight', '❌ Error getting insights'));
+        }
+
+        function showAI(elementId, message) {
+            const el = document.getElementById(elementId);
+            el.textContent = message;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 5000);
+        }
+
+        // Helper functions to clear forms
+        function clearMealForm() {
+            document.getElementById('meal-food').value = '';
+            document.getElementById('meal-cals').value = '';
+            document.getElementById('meal-protein').value = '';
+        }
+
+        function clearWorkoutForm() {
+            document.getElementById('workout-type').value = '';
+            document.getElementById('workout-duration').value = '';
+            document.getElementById('workout-intensity').value = 'low';
+        }
+
+        function clearSleepForm() {
+            document.getElementById('sleep-hours').value = '';
+            document.getElementById('sleep-quality').value = 'poor';
+        }
+    </script>
+</body>
+</html>
