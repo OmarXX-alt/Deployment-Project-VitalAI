@@ -17,8 +17,8 @@ class DatabaseConnection:
         # Initialize the MongoClient. The client maintains a connection pool internally.
         self.client = MongoClient(app.config["MONGO_URI"])
         
-        # Get the default database (extracted from URI) or fallback to 'vitalai'
-        self.db = self.client.get_default_database(default='vitalai')
+        # Get the default database (extracted from URI) or fallback to 'vital_ai'
+        self.db = self.client.get_default_database(default='vital_ai')
 
         # Test the connection to ensure it's successful
         try:
