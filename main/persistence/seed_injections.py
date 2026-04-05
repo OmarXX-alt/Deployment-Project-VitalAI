@@ -8,6 +8,11 @@ import os
 from datetime import datetime, timezone
 from flask import Flask
 from pymongo import MongoClient
+from dotenv import load_dotenv
+try:
+    import certifi
+except Exception:
+    certifi = None
  
  
 # ── Reuse the project's DatabaseConnection exactly as written ─────────────────
@@ -20,7 +25,16 @@ class DatabaseConnection:
     def init_app(self, app):
         mongo_uri = os.environ.get("MONGO_URI", "mongodb://localhost:27017/vital_ai")
         app.config.setdefault("MONGO_URI", mongo_uri)
-        self.client = MongoClient(app.config["MONGO_URI"])
+        client_kwargs = {
+            "serverSelectionTimeoutMS": 5000,
+        }
+        ca_file = os.environ.get("MONGO_TLS_CA_FILE")
+        if ca_file:
+            client_kwargs["tlsCAFile"] = ca_file
+        elif certifi is not None:
+            client_kwargs["tlsCAFile"] = certifi.where()
+
+        self.client = MongoClient(app.config["MONGO_URI"], **client_kwargs)
         self.db = self.client.get_default_database(default="vital_ai")
         try:
             self.client.admin.command("ping")
@@ -29,6 +43,9 @@ class DatabaseConnection:
             print(f"Failed to connect to MongoDB: {e}")
         app.db = self.db
  
+env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
+load_dotenv(dotenv_path=env_path)
+
 db_conn = DatabaseConnection()
  
 def get_db():
@@ -44,7 +61,7 @@ def dt(iso: str) -> datetime:
  
 # ── Seed data ─────────────────────────────────────────────────────────────────
  
-def seed():
+def seed_injections():
     db = get_db()
  
     # ── Drop existing collections so the script is idempotent ────────────────
@@ -473,6 +490,6 @@ if __name__ == "__main__":
     db_conn.init_app(app)
  
     with app.app_context():
-        seed()
+        seed_injections()
  
 
