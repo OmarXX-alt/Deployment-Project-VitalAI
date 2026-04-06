@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
-from typing import Any
+from datetime import datetime, timezone
 
 from main.persistence.repositories import (
     hydration_repository,
@@ -47,13 +46,23 @@ def _average(values: list[float]) -> float | None:
 
 
 def _sleep_summary(logs: list[dict]) -> str:
-    durations = [log.get("duration_hrs") for log in logs if isinstance(log.get("duration_hrs"), (int, float))]
-    qualities = [log.get("quality") for log in logs if isinstance(log.get("quality"), (int, float))]
+    durations = [
+        log.get("duration_hrs")
+        for log in logs
+        if isinstance(log.get("duration_hrs"), (int, float))
+    ]
+    qualities = [
+        log.get("quality")
+        for log in logs
+        if isinstance(log.get("quality"), (int, float))
+    ]
     avg_duration = _average([float(value) for value in durations])
     avg_quality = _average([float(value) for value in qualities])
     if avg_duration is None or avg_quality is None:
         return "No sleep logs in the last 7 days"
-    return f"Avg {avg_duration:.1f} hrs/night, avg quality {avg_quality:.1f}/5 over 7 days"
+    return (
+        f"Avg {avg_duration:.1f} hrs/night, avg quality {avg_quality:.1f}/5 over 7 days"
+    )
 
 
 def _workout_summary(logs: list[dict]) -> str:
@@ -119,7 +128,11 @@ def _hydration_summary(logs: list[dict], goal_ml: int | None) -> str:
 def _mood_summary(mood_logs: list[dict], sleep_logs: list[dict]) -> str:
     if not mood_logs:
         return "No mood logs in the last 7 days"
-    ratings = [log.get("mood_rating") for log in mood_logs if isinstance(log.get("mood_rating"), (int, float))]
+    ratings = [
+        log.get("mood_rating")
+        for log in mood_logs
+        if isinstance(log.get("mood_rating"), (int, float))
+    ]
     avg_mood = _average([float(value) for value in ratings])
     if avg_mood is None:
         return "No mood logs in the last 7 days"
@@ -138,7 +151,9 @@ def _mood_summary(mood_logs: list[dict], sleep_logs: list[dict]) -> str:
         rating = log.get("mood_rating")
         if not isinstance(rating, (int, float)):
             continue
-        dt_value = _parse_iso_datetime(logged_at) if isinstance(logged_at, str) else None
+        dt_value = (
+            _parse_iso_datetime(logged_at) if isinstance(logged_at, str) else None
+        )
         if dt_value is None:
             continue
         if dt_value.date().isoformat() in high_sleep_days:
@@ -161,7 +176,9 @@ def get_user_context(user_id: str, log_type: str = "all") -> dict[str, str]:
     """
     allowed_types = {"all", "workout", "meal", "sleep", "hydration", "mood"}
     if log_type not in allowed_types:
-        raise ValueError("log_type must be one of: all, workout, meal, sleep, hydration, mood")
+        raise ValueError(
+            "log_type must be one of: all, workout, meal, sleep, hydration, mood"
+        )
 
     context: dict[str, str] = {}
     if log_type in {"all", "sleep"}:

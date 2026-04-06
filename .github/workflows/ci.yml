@@ -142,6 +142,8 @@ jobs:
         run: |
           pip install flake8
           # Hard stop on syntax errors only
-          flake8 . --count --select=E9 --show-source --statistics
+          flake8 . --count --select=E9 --show-source --statistics \
+            --exclude .venv,venv,**/site-packages,**/__pycache__
           # Style pass with a generous 120-char line limit
-          flake8 . --count --max-line-length=120 --statistics
+          flake8 . --count --max-line-length=120 --statistics \
+            --exclude .venv,venv,**/site-packages,**/__pycache__

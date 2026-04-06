@@ -29,17 +29,8 @@ def index():
 
 @app.get("/health")
 def health():
-    db_status = "OK"
-    try:
-        db.client.admin.command('ping')
-    except Exception:
-        db_status = "Disconnected"
-        
-    return jsonify({
-        "status": "OK",
-        "database": db_status
-    }), 200
+    return jsonify({"status": "OK"}), 200
+
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
-

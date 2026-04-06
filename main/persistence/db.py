@@ -27,7 +27,7 @@ class DatabaseConnection:
         try:
             self.client = MongoClient(
                 app.config["MONGO_URI"],
-                tlsCAFile=certifi.where(),      # resolves SSL handshake issues on Atlas
+                tlsCAFile=certifi.where(),  # resolves SSL handshake issues on Atlas
                 serverSelectionTimeoutMS=5000,  # fail fast instead of hanging
             )
 
