@@ -1,20 +1,23 @@
 import os
-import sys
 
 from flask import Flask, jsonify
 
+from main.persistence.db import db
+from main.server.config import get_config
+from main.server.errors import register_error_handlers
 
-def create_app():
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-    if project_root not in sys.path:
-        sys.path.insert(0, project_root)
 
-    from main.persistence.database import db
-
+def create_app(config_name=None):
     app = Flask(__name__)
 
+    config_class = get_config(config_name)
+    app.config.from_object(config_class)
+
     # Initialize the database connection with the Flask app
-    db.init_app(app)
+    if app.config.get("INIT_DB", True):
+        db.init_app(app)
+
+    register_error_handlers(app)
 
     @app.get("/")
     def index():
@@ -47,6 +50,5 @@ app = create_app()
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", "5000"))
-    env = os.getenv("FLASK_ENV", "production")
-    debug = env.lower() != "production"
+    debug = app.config.get("DEBUG", False)
     app.run(debug=debug, host="0.0.0.0", port=port)

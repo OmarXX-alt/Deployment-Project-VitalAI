@@ -1,47 +1,8 @@
-import logging
-import os
+"""Compatibility shim for legacy imports.
 
-from pymongo import MongoClient
+Use main.persistence.db as the canonical DB extension module.
+"""
 
-logger = logging.getLogger(__name__)
+from main.persistence.db import DatabaseConnection, db, get_db
 
-
-class DatabaseConnection:
-    def __init__(self):
-        self.client = None
-        self.db = None
-
-    def init_app(self, app):
-        """
-        Initialize the MongoDB connection using the Flask app configuration.
-        """
-        # Get MongoDB URI from environment variable or use default local connection
-        mongo_uri = os.environ.get("MONGO_URI", "mongodb://localhost:27017/vital_ai")
-        app.config.setdefault("MONGO_URI", mongo_uri)
-
-        # Initialize the MongoClient. The client maintains a connection pool internally.
-        self.client = MongoClient(app.config["MONGO_URI"])
-
-        # Get the default database (extracted from URI) or fallback to 'vital_ai'
-        self.db = self.client.get_default_database(default="vital_ai")
-
-        # Test the connection to ensure it's successful
-        try:
-            self.client.admin.command("ping")
-            logger.debug("Successfully connected to MongoDB.")
-        except Exception as e:
-            logger.error("Failed to connect to MongoDB: %s", e, exc_info=True)
-
-        # Attach the database to the app context if needed
-        app.db = self.db
-
-
-# Global instance to be imported and used across your application
-db = DatabaseConnection()
-
-
-def get_db():
-    """
-    Utility function to get the current database instance.
-    """
-    return db.db
+__all__ = ["DatabaseConnection", "db", "get_db"]

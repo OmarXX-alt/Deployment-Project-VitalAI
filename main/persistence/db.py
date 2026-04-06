@@ -82,7 +82,7 @@ def _create_indexes(db):
 
 # ── Global instance — import this across the app ──────────────────────────────
 
-db_conn = DatabaseConnection()
+db = DatabaseConnection()
 
 
 def get_db():
@@ -94,8 +94,8 @@ def get_db():
         db = get_db()
         db.workout_logs.find({"user_id": user_id})
     """
-    if db_conn.db is None:
+    if db.db is None:
         raise RuntimeError(
-            "Database not initialised. Call db_conn.init_app(app) first."
+            "Database not initialised. Call db.init_app(app) first."
         )
-    return db_conn.db
+    return db.db
