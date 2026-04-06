@@ -2,7 +2,7 @@ import os
 
 from flask import Flask, jsonify
 
-from main.persistence.db import db
+from main.persistence.extensions import mongo
 from main.server.config import get_config
 from main.server.errors import register_error_handlers
 
@@ -15,7 +15,7 @@ def create_app(config_name=None):
 
     # Initialize the database connection with the Flask app
     if app.config.get("INIT_DB", True):
-        db.init_app(app)
+        mongo.init_app(app)
 
     register_error_handlers(app)
 
