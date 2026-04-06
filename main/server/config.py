@@ -25,7 +25,8 @@ class TestingConfig(Config):
 
 class ProductionConfig(Config):
     DEBUG = False
-    INIT_DB = True
+    # INIT_DB is inherited from Config - uses environment variable or defaults to false
+
 
 
 CONFIG_BY_NAME = {
