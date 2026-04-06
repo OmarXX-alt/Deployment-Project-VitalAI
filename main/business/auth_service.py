@@ -1,7 +1,14 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
+
+import bcrypt
+import jwt
+from bson import ObjectId
+from bson.errors import InvalidId
+from pymongo.errors import DuplicateKeyError
+
 from main.persistence.extensions import mongo
-from main.persistence.models import UserDocument, UserPublic
 
 
 def register_user(
@@ -29,13 +36,44 @@ def register_user(
         3. Issue JWT: payload = {"user_id": str(inserted_id), "exp": now+expiry}
         4. Return {"token", "user_id", "display_name"}, 201
     """
-    _ = (mongo, UserDocument)
+    password_hash = bcrypt.hashpw(
+        password.encode("utf-8"), bcrypt.gensalt(rounds=12)
+    ).decode("utf-8")
+
+    now = datetime.now(timezone.utc)
+    clean_display_name = display_name.strip()
+    doc = {
+        "display_name": clean_display_name,
+        "email": email.lower().strip(),
+        "password_hash": password_hash,
+        "daily_calorie_target": None,
+        "hydration_goal": None,
+        "wellness_goal": None,
+        "last_briefing_date": None,
+        "created_at": now,
+    }
+
+    try:
+        result = mongo.users.insert_one(doc)
+        inserted_id = str(result.inserted_id)
+    except DuplicateKeyError:
+        return (
+            {
+                "error": "email_conflict",
+                "message": "An account with this email already exists.",
+            },
+            409,
+        )
+
+    exp = datetime.now(timezone.utc) + timedelta(hours=jwt_expiry_hours)
+    token = jwt.encode(
+        {"user_id": inserted_id, "exp": exp},
+        jwt_secret,
+        algorithm="HS256",
+    )
+
     return (
-        {
-            "token": "stub.jwt.token",
-            "user_id": "stub_001",
-            "display_name": display_name,
-        },
+        {"token": token, "user_id": inserted_id, "display_name": clean_display_name},
         201,
     )
 
@@ -62,8 +100,31 @@ def login_user(
         3. issue JWT with expiry
         4. return token + display_name
     """
-    _ = (mongo, UserPublic)
-    return ({"token": "stub.jwt.token", "display_name": "Stub User"}, 200)
+    generic_401 = (
+        {
+            "error": "invalid_credentials",
+            "message": "Invalid email or password.",
+        },
+        401,
+    )
+
+    user = mongo.users.find_one({"email": email.lower().strip()})
+    if user is None:
+        return generic_401
+
+    stored_hash = user["password_hash"]
+    if not bcrypt.checkpw(password.encode("utf-8"), stored_hash.encode("utf-8")):
+        return generic_401
+
+    user_id = str(user["_id"])
+    exp = datetime.now(timezone.utc) + timedelta(hours=jwt_expiry_hours)
+    token = jwt.encode(
+        {"user_id": user_id, "exp": exp},
+        jwt_secret,
+        algorithm="HS256",
+    )
+
+    return ({"token": token, "display_name": user["display_name"]}, 200)
 
 
 def get_profile(user_id: str) -> tuple[dict, int]:
@@ -82,15 +143,22 @@ def get_profile(user_id: str) -> tuple[dict, int]:
         2. project out password_hash
         3. return UserPublic
     """
-    _ = (mongo, UserPublic)
+    try:
+        user = mongo.users.find_one({"_id": ObjectId(user_id)})
+    except InvalidId:
+        return ({"error": "not_found", "message": "User not found."}, 404)
+
+    if user is None:
+        return ({"error": "not_found", "message": "User not found."}, 404)
+
     return (
         {
-            "user_id": user_id,
-            "display_name": "Stub User",
-            "email": "stub@example.com",
-            "daily_calorie_target": None,
-            "hydration_goal": None,
-            "wellness_goal": None,
+            "user_id": str(user["_id"]),
+            "display_name": user["display_name"],
+            "email": user["email"],
+            "daily_calorie_target": user.get("daily_calorie_target"),
+            "hydration_goal": user.get("hydration_goal"),
+            "wellness_goal": user.get("wellness_goal"),
         },
         200,
     )
@@ -113,15 +181,19 @@ def update_profile(user_id: str, updates: dict) -> tuple[dict, int]:
         3. re-fetch
         4. return UserPublic
     """
-    _ = (mongo, UserPublic)
-    return (
-        {
-            "user_id": user_id,
-            "display_name": updates.get("display_name") or "Stub User",
-            "email": "stub@example.com",
-            "daily_calorie_target": updates.get("daily_calorie_target"),
-            "hydration_goal": updates.get("hydration_goal"),
-            "wellness_goal": updates.get("wellness_goal"),
-        },
-        200,
-    )
+    clean: dict = {}
+    str_fields = {"display_name", "wellness_goal"}
+    for key, value in updates.items():
+        if value is None:
+            continue
+        clean[key] = value.strip() if key in str_fields else value
+
+    if not clean:
+        return get_profile(user_id)
+
+    try:
+        mongo.users.update_one({"_id": ObjectId(user_id)}, {"$set": clean})
+    except InvalidId:
+        return ({"error": "not_found", "message": "User not found."}, 404)
+
+    return get_profile(user_id)
