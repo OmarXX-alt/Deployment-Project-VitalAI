@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up | VitalAI</title>
-    <link rel="stylesheet" href="/main/application/static/styles.css">
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
     <div class="container">
@@ -75,7 +75,7 @@
             </form>
             
             <div class="link">
-                Already have an account? <a href="/main/application/templates/login.html">Sign in</a>
+                Already have an account? <a href="/login">Sign in</a>
             </div>
         </div>
     </div>
@@ -139,12 +139,9 @@
             
             // Get all form values
             const formData = {
-                displayName: displayName,
+                display_name: displayName,
                 email: email,
-                password: password,
-                calorieTarget: parseInt(document.getElementById('calorieTarget').value) || 2000,
-                hydrationTarget: parseInt(document.getElementById('hydrationTarget').value) || 2500,
-                wellnessGoal: document.getElementById('wellnessGoal').value || null
+                password: password
             };
             
             // Show loading message
@@ -172,7 +169,7 @@
                     
                     // Redirect to dashboard
                     setTimeout(() => {
-                        window.location.href = '/dashboard.html';
+                        window.location.href = '/dashboard';
                     }, 1000);
                 } else {
                     // Show error from backend
