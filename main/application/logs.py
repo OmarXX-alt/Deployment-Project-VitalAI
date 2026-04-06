@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from flask import Blueprint, g, jsonify, request
 
-from business.log_service import (
+from main.business.log_service import (
     get_log_history,
     save_hydration_log,
     save_meal_log,
@@ -10,7 +10,7 @@ from business.log_service import (
     save_sleep_log,
     save_workout_log,
 )
-from persistence.schemas import (
+from main.persistence.schemas import (
     HydrationLogSchema,
     MealLogSchema,
     MoodLogSchema,
@@ -18,7 +18,7 @@ from persistence.schemas import (
     WorkoutLogSchema,
     validate_schema,
 )
-from server.middleware.auth import require_auth
+from main.server.middleware.auth import require_auth
 
 
 logs_bp = Blueprint("logs", __name__)

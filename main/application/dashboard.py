@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from flask import Blueprint, current_app, g, jsonify
 
-from business import aggregation_service, ai_service
-from server.middleware.auth import require_auth
+from main.business import aggregation_service, ai_service
+from main.server.middleware.auth import require_auth
 
 
 dashboard_bp = Blueprint("dashboard", __name__)

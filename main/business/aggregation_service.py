@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from persistence.extensions import mongo
-from persistence.models import UserPublic
+from main.persistence.extensions import mongo
+from main.persistence.models import UserPublic
 
 
 def build_context(user_id: str, log_types=None, days: int = 7) -> dict:

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-from persistence.extensions import mongo
-from persistence.models import UserDocument, UserPublic
+from main.persistence.extensions import mongo
+from main.persistence.models import UserDocument, UserPublic
 
 
 def register_user(

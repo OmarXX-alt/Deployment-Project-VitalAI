@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from flask import Blueprint, g, jsonify, request
 
-from business.auth_service import get_profile, update_profile
-from persistence.schemas import ProfileUpdateSchema, validate_schema
-from server.middleware.auth import require_auth
+from main.business.auth_service import get_profile, update_profile
+from main.persistence.schemas import ProfileUpdateSchema, validate_schema
+from main.server.middleware.auth import require_auth
 
 
 profile_bp = Blueprint("profile", __name__)

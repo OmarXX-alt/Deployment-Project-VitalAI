@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Optional
 
-from persistence.extensions import mongo
-from persistence.models import UserPublic
+from main.persistence.extensions import mongo
+from main.persistence.models import UserPublic
 
 
 SYSTEM_PERSONA = "You are VitalAI, a concise wellness assistant."

@@ -1,5 +1,6 @@
 import os
 
+from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template
 
 from main.persistence.extensions import mongo
@@ -8,6 +9,7 @@ from main.server.errors import register_error_handlers
 
 
 def create_app(config_name=None):
+    load_dotenv()
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     app = Flask(
         __name__,

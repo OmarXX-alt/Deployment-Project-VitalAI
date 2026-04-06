@@ -109,6 +109,7 @@ class MongoDB:
             [("user_id", 1), ("date", 1)],
             unique=True,
             name="uq_mood_user_date",
+            partialFilterExpression={"date": {"$exists": True}},
         )
 
         self.db["wellness_insights"].create_index(

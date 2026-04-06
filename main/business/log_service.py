@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from persistence.extensions import mongo
-from persistence.models import (
+from main.persistence.extensions import mongo
+from main.persistence.models import (
     HydrationLogDocument,
     MealLogDocument,
     MoodLogDocument,

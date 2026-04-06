@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from flask import Blueprint, jsonify, request
 
-from business.auth_service import login_user, register_user
-from persistence.schemas import LoginSchema, RegisterSchema, validate_schema
+from main.business.auth_service import login_user, register_user
+from main.persistence.schemas import LoginSchema, RegisterSchema, validate_schema
 
 
 auth_bp = Blueprint("auth", __name__)
