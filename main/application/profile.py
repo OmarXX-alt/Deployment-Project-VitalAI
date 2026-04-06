@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from flask import Blueprint, g, jsonify, request
 
-from main.business.auth_service import get_profile, update_profile
+from main.business import auth_service
 from main.persistence.schemas import ProfileUpdateSchema, validate_schema
 from main.server.middleware.auth import require_auth
 
@@ -16,7 +16,7 @@ profile_schema = ProfileUpdateSchema()
 @require_auth
 def profile_get():
     # TODO: [Logic-Issue-004a]
-    response_body, status = get_profile(g.user_id)
+    response_body, status = auth_service.get_profile(g.user_id)
     return jsonify(response_body), status
 
 
@@ -34,5 +34,5 @@ def profile_update():
     updates = {key: value for key, value in validated.items() if value is not None}
 
     # TODO: [Logic-Issue-004b]
-    response_body, status = update_profile(g.user_id, updates)
+    response_body, status = auth_service.update_profile(g.user_id, updates)
     return jsonify(response_body), status

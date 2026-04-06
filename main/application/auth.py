@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, current_app, jsonify, request
 
-from main.business.auth_service import login_user, register_user
+from main.business import auth_service
 from main.persistence.schemas import LoginSchema, RegisterSchema, validate_schema
 
 
@@ -25,12 +25,12 @@ def register():
     # Purpose:  Hash password, create user in MongoDB, issue JWT.
     # Delegated to: business.auth_service.register_user()
     # TODO: [Logic-Issue-001]
-    response_body, status = register_user(
+    response_body, status = auth_service.register_user(
         validated["display_name"],
         validated["email"],
         validated["password"],
-        auth_bp.app.config.get("JWT_SECRET"),
-        auth_bp.app.config.get("JWT_EXPIRY_HOURS", 24),
+        current_app.config.get("JWT_SECRET"),
+        current_app.config.get("JWT_EXPIRY_HOURS", 24),
     )
     return jsonify(response_body), status
 
@@ -48,10 +48,10 @@ def login():
     # Purpose:  Authenticate user and issue JWT.
     # Delegated to: business.auth_service.login_user()
     # TODO: [Logic-Issue-002]
-    response_body, status = login_user(
+    response_body, status = auth_service.login_user(
         validated["email"],
         validated["password"],
-        auth_bp.app.config.get("JWT_SECRET"),
-        auth_bp.app.config.get("JWT_EXPIRY_HOURS", 24),
+        current_app.config.get("JWT_SECRET"),
+        current_app.config.get("JWT_EXPIRY_HOURS", 24),
     )
     return jsonify(response_body), status

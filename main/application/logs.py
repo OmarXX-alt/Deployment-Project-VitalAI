@@ -2,14 +2,7 @@ from __future__ import annotations
 
 from flask import Blueprint, g, jsonify, request
 
-from main.business.log_service import (
-    get_log_history,
-    save_hydration_log,
-    save_meal_log,
-    save_mood_log,
-    save_sleep_log,
-    save_workout_log,
-)
+from main.business import log_service
 from main.persistence.schemas import (
     HydrationLogSchema,
     MealLogSchema,
@@ -48,7 +41,7 @@ def log_workout():
         return jsonify({"error": "validation_error", "fields": errors}), 422
 
     # TODO: [Logic-Issue-005]
-    response_body, status = save_workout_log(
+    response_body, status = log_service.save_workout_log(
         g.user_id,
         validated["exercise_type"],
         validated["duration_minutes"],
@@ -72,7 +65,7 @@ def log_meal():
         return jsonify({"error": "validation_error", "fields": errors}), 422
 
     # TODO: [Logic-Issue-006]
-    response_body, status = save_meal_log(
+    response_body, status = log_service.save_meal_log(
         g.user_id,
         validated["meal_name"],
         validated["calories"],
@@ -94,7 +87,7 @@ def log_sleep():
         return jsonify({"error": "validation_error", "fields": errors}), 422
 
     # TODO: [Logic-Issue-007]
-    response_body, status = save_sleep_log(
+    response_body, status = log_service.save_sleep_log(
         g.user_id,
         validated["sleep_start"],
         validated["sleep_end"],
@@ -115,7 +108,7 @@ def log_hydration():
         return jsonify({"error": "validation_error", "fields": errors}), 422
 
     # TODO: [Logic-Issue-008]
-    response_body, status = save_hydration_log(
+    response_body, status = log_service.save_hydration_log(
         g.user_id,
         validated["amount_ml"],
         validated.get("logged_at"),
@@ -135,7 +128,7 @@ def log_mood():
         return jsonify({"error": "validation_error", "fields": errors}), 422
 
     # TODO: [Logic-Issue-009]
-    response_body, status = save_mood_log(
+    response_body, status = log_service.save_mood_log(
         g.user_id,
         validated["mood_score"],
         validated.get("note"),
@@ -163,5 +156,5 @@ def log_history(log_type: str):
     days = max(1, min(days, 90))
 
     # TODO: [Logic-Issue-010]
-    response_body, status = get_log_history(g.user_id, log_type, days)
+    response_body, status = log_service.get_log_history(g.user_id, log_type, days)
     return jsonify(response_body), status

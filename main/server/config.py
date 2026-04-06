@@ -6,6 +6,8 @@ class Config:
     TESTING = False
     INIT_DB = True
     MONGO_URI = os.getenv("MONGO_URI")
+    JWT_SECRET = os.getenv("JWT_SECRET", "dev-jwt-secret")
+    JWT_EXPIRY_HOURS = int(os.getenv("JWT_EXPIRY_HOURS", "24"))
 
 
 class DevelopmentConfig(Config):
