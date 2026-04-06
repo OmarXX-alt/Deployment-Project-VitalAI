@@ -13,6 +13,7 @@ COPY . .
 
 # Since Render is in use: Expose the Port the application will run on
 ENV PORT=5000
+ENV INIT_DB=false
 EXPOSE $PORT
 
 # Using gunicron for production, running a shell to resolve $PORT at runtime

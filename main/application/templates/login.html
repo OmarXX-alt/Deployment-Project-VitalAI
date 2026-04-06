@@ -67,8 +67,8 @@
                 },
                 body: JSON.stringify({ email, password })
             })
-            .then(response => response.json())
-            .then(data => {
+            .then(response => response.json().then(data => ({ response, data })))
+            .then(({ response, data }) => {
                 if (data.token) {
                     // Store token in localStorage
                     localStorage.setItem('token', data.token);
@@ -81,8 +81,9 @@
                         window.location.href = '/dashboard';
                     }, 1000);
                 } else {
-                    // Show error from backend
-                    document.getElementById('error-message').textContent = data.message || 'Login failed. Please try again.';
+                    const errorFields = Array.isArray(data.fields) ? data.fields.join(' | ') : null;
+                    const fallback = response.ok ? 'Login failed. Please try again.' : 'Login failed. Please check your input.';
+                    document.getElementById('error-message').textContent = errorFields || data.message || fallback;
                     document.getElementById('error-message').style.display = 'block';
                     document.getElementById('success-message').style.display = 'none';
                 }

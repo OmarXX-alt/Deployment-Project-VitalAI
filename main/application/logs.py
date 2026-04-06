@@ -1,15 +1,8 @@
 from __future__ import annotations
 
-from flask import Blueprint, g, jsonify, request
+from flask import Blueprint, current_app, g, jsonify, request
 
-from main.business.log_service import (
-    get_log_history,
-    save_hydration_log,
-    save_meal_log,
-    save_mood_log,
-    save_sleep_log,
-    save_workout_log,
-)
+from main.business import log_service
 from main.persistence.schemas import (
     HydrationLogSchema,
     MealLogSchema,
@@ -41,14 +34,16 @@ WELLNESS_RESOURCE = {
 def log_workout():
     body = request.get_json(silent=True)
     if body is None:
+        current_app.logger.info("log_workout: missing or invalid JSON body")
         return jsonify({"error": "invalid_json", "message": "Request body is required."}), 400
 
     validated, errors = validate_schema(workout_schema, body)
     if errors:
+        current_app.logger.info("log_workout: validation_error %s", errors)
         return jsonify({"error": "validation_error", "fields": errors}), 422
 
     # TODO: [Logic-Issue-005]
-    response_body, status = save_workout_log(
+    response_body, status = log_service.save_workout_log(
         g.user_id,
         validated["exercise_type"],
         validated["duration_minutes"],
@@ -65,14 +60,16 @@ def log_workout():
 def log_meal():
     body = request.get_json(silent=True)
     if body is None:
+        current_app.logger.info("log_meal: missing or invalid JSON body")
         return jsonify({"error": "invalid_json", "message": "Request body is required."}), 400
 
     validated, errors = validate_schema(meal_schema, body)
     if errors:
+        current_app.logger.info("log_meal: validation_error %s", errors)
         return jsonify({"error": "validation_error", "fields": errors}), 422
 
     # TODO: [Logic-Issue-006]
-    response_body, status = save_meal_log(
+    response_body, status = log_service.save_meal_log(
         g.user_id,
         validated["meal_name"],
         validated["calories"],
@@ -87,14 +84,16 @@ def log_meal():
 def log_sleep():
     body = request.get_json(silent=True)
     if body is None:
+        current_app.logger.info("log_sleep: missing or invalid JSON body")
         return jsonify({"error": "invalid_json", "message": "Request body is required."}), 400
 
     validated, errors = validate_schema(sleep_schema, body)
     if errors:
+        current_app.logger.info("log_sleep: validation_error %s", errors)
         return jsonify({"error": "validation_error", "fields": errors}), 422
 
     # TODO: [Logic-Issue-007]
-    response_body, status = save_sleep_log(
+    response_body, status = log_service.save_sleep_log(
         g.user_id,
         validated["sleep_start"],
         validated["sleep_end"],
@@ -108,14 +107,16 @@ def log_sleep():
 def log_hydration():
     body = request.get_json(silent=True)
     if body is None:
+        current_app.logger.info("log_hydration: missing or invalid JSON body")
         return jsonify({"error": "invalid_json", "message": "Request body is required."}), 400
 
     validated, errors = validate_schema(hydration_schema, body)
     if errors:
+        current_app.logger.info("log_hydration: validation_error %s", errors)
         return jsonify({"error": "validation_error", "fields": errors}), 422
 
     # TODO: [Logic-Issue-008]
-    response_body, status = save_hydration_log(
+    response_body, status = log_service.save_hydration_log(
         g.user_id,
         validated["amount_ml"],
         validated.get("logged_at"),
@@ -128,14 +129,16 @@ def log_hydration():
 def log_mood():
     body = request.get_json(silent=True)
     if body is None:
+        current_app.logger.info("log_mood: missing or invalid JSON body")
         return jsonify({"error": "invalid_json", "message": "Request body is required."}), 400
 
     validated, errors = validate_schema(mood_schema, body)
     if errors:
+        current_app.logger.info("log_mood: validation_error %s", errors)
         return jsonify({"error": "validation_error", "fields": errors}), 422
 
     # TODO: [Logic-Issue-009]
-    response_body, status = save_mood_log(
+    response_body, status = log_service.save_mood_log(
         g.user_id,
         validated["mood_score"],
         validated.get("note"),
@@ -163,5 +166,5 @@ def log_history(log_type: str):
     days = max(1, min(days, 90))
 
     # TODO: [Logic-Issue-010]
-    response_body, status = get_log_history(g.user_id, log_type, days)
+    response_body, status = log_service.get_log_history(g.user_id, log_type, days)
     return jsonify(response_body), status

@@ -1,4 +1,5 @@
 import os
+import sys
 
 from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template
@@ -6,6 +7,10 @@ from flask import Flask, jsonify, render_template
 from main.persistence.extensions import mongo
 from main.server.config import get_config
 from main.server.errors import register_error_handlers
+
+
+def _is_pytest_run() -> bool:
+    return "pytest" in sys.modules or os.getenv("PYTEST_CURRENT_TEST") is not None
 
 
 def create_app(config_name=None):
@@ -22,7 +27,7 @@ def create_app(config_name=None):
     app.config.from_object(config_class)
 
     # Initialize the database connection with the Flask app
-    if app.config.get("INIT_DB", True):
+    if app.config.get("INIT_DB", True) and not _is_pytest_run():
         mongo.init_app(app)
 
     register_error_handlers(app)

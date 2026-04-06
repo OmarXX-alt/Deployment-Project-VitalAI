@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, current_app, jsonify, request
 
-from main.business.auth_service import login_user, register_user
+from main.business import auth_service
 from main.persistence.schemas import LoginSchema, RegisterSchema, validate_schema
 
 
@@ -16,21 +16,23 @@ login_schema = LoginSchema()
 def register():
     body = request.get_json(silent=True)
     if body is None:
+        current_app.logger.info("register: missing or invalid JSON body")
         return jsonify({"error": "invalid_json", "message": "Request body is required."}), 400
 
     validated, errors = validate_schema(register_schema, body)
     if errors:
+        current_app.logger.info("register: validation_error %s", errors)
         return jsonify({"error": "validation_error", "fields": errors}), 422
 
     # Purpose:  Hash password, create user in MongoDB, issue JWT.
     # Delegated to: business.auth_service.register_user()
     # TODO: [Logic-Issue-001]
-    response_body, status = register_user(
+    response_body, status = auth_service.register_user(
         validated["display_name"],
         validated["email"],
         validated["password"],
-        auth_bp.app.config.get("JWT_SECRET"),
-        auth_bp.app.config.get("JWT_EXPIRY_HOURS", 24),
+        current_app.config.get("JWT_SECRET"),
+        current_app.config.get("JWT_EXPIRY_HOURS", 24),
     )
     return jsonify(response_body), status
 
@@ -39,19 +41,21 @@ def register():
 def login():
     body = request.get_json(silent=True)
     if body is None:
+        current_app.logger.info("login: missing or invalid JSON body")
         return jsonify({"error": "invalid_json", "message": "Request body is required."}), 400
 
     validated, errors = validate_schema(login_schema, body)
     if errors:
+        current_app.logger.info("login: validation_error %s", errors)
         return jsonify({"error": "validation_error", "fields": errors}), 422
 
     # Purpose:  Authenticate user and issue JWT.
     # Delegated to: business.auth_service.login_user()
     # TODO: [Logic-Issue-002]
-    response_body, status = login_user(
+    response_body, status = auth_service.login_user(
         validated["email"],
         validated["password"],
-        auth_bp.app.config.get("JWT_SECRET"),
-        auth_bp.app.config.get("JWT_EXPIRY_HOURS", 24),
+        current_app.config.get("JWT_SECRET"),
+        current_app.config.get("JWT_EXPIRY_HOURS", 24),
     )
     return jsonify(response_body), status
