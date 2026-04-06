@@ -9,6 +9,10 @@ from main.server.config import get_config
 from main.server.errors import register_error_handlers
 
 
+def _is_pytest_run() -> bool:
+    return "pytest" in sys.modules or os.getenv("PYTEST_CURRENT_TEST") is not None
+
+
 def create_app(config_name=None):
     load_dotenv()
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -23,7 +27,7 @@ def create_app(config_name=None):
     app.config.from_object(config_class)
 
     # Initialize the database connection with the Flask app
-    if app.config.get("INIT_DB", True):
+    if app.config.get("INIT_DB", True) and not _is_pytest_run():
         mongo.init_app(app)
 
     register_error_handlers(app)
@@ -61,13 +65,8 @@ def create_app(config_name=None):
     return app
 
 
-def _should_create_default_app() -> bool:
-    env = os.getenv("FLASK_ENV", "production").lower()
-    return "pytest" not in sys.modules and env != "testing"
-
-
 # Module-level app instance for gunicorn WSGI
-app = create_app() if _should_create_default_app() else None
+app = create_app()
 
 
 if __name__ == "__main__":
