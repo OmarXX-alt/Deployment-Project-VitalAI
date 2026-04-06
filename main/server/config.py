@@ -21,7 +21,7 @@ class TestingConfig(Config):
 
 class ProductionConfig(Config):
     DEBUG = False
-    INIT_DB = False
+    INIT_DB = True
 
 
 CONFIG_BY_NAME = {

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from flask import Blueprint, g, jsonify, request
+from flask import Blueprint, current_app, g, jsonify, request
 
 from main.business import log_service
 from main.persistence.schemas import (
@@ -34,10 +34,12 @@ WELLNESS_RESOURCE = {
 def log_workout():
     body = request.get_json(silent=True)
     if body is None:
+        current_app.logger.info("log_workout: missing or invalid JSON body")
         return jsonify({"error": "invalid_json", "message": "Request body is required."}), 400
 
     validated, errors = validate_schema(workout_schema, body)
     if errors:
+        current_app.logger.info("log_workout: validation_error %s", errors)
         return jsonify({"error": "validation_error", "fields": errors}), 422
 
     # TODO: [Logic-Issue-005]
@@ -58,10 +60,12 @@ def log_workout():
 def log_meal():
     body = request.get_json(silent=True)
     if body is None:
+        current_app.logger.info("log_meal: missing or invalid JSON body")
         return jsonify({"error": "invalid_json", "message": "Request body is required."}), 400
 
     validated, errors = validate_schema(meal_schema, body)
     if errors:
+        current_app.logger.info("log_meal: validation_error %s", errors)
         return jsonify({"error": "validation_error", "fields": errors}), 422
 
     # TODO: [Logic-Issue-006]
@@ -80,10 +84,12 @@ def log_meal():
 def log_sleep():
     body = request.get_json(silent=True)
     if body is None:
+        current_app.logger.info("log_sleep: missing or invalid JSON body")
         return jsonify({"error": "invalid_json", "message": "Request body is required."}), 400
 
     validated, errors = validate_schema(sleep_schema, body)
     if errors:
+        current_app.logger.info("log_sleep: validation_error %s", errors)
         return jsonify({"error": "validation_error", "fields": errors}), 422
 
     # TODO: [Logic-Issue-007]
@@ -101,10 +107,12 @@ def log_sleep():
 def log_hydration():
     body = request.get_json(silent=True)
     if body is None:
+        current_app.logger.info("log_hydration: missing or invalid JSON body")
         return jsonify({"error": "invalid_json", "message": "Request body is required."}), 400
 
     validated, errors = validate_schema(hydration_schema, body)
     if errors:
+        current_app.logger.info("log_hydration: validation_error %s", errors)
         return jsonify({"error": "validation_error", "fields": errors}), 422
 
     # TODO: [Logic-Issue-008]
@@ -121,10 +129,12 @@ def log_hydration():
 def log_mood():
     body = request.get_json(silent=True)
     if body is None:
+        current_app.logger.info("log_mood: missing or invalid JSON body")
         return jsonify({"error": "invalid_json", "message": "Request body is required."}), 400
 
     validated, errors = validate_schema(mood_schema, body)
     if errors:
+        current_app.logger.info("log_mood: validation_error %s", errors)
         return jsonify({"error": "validation_error", "fields": errors}), 422
 
     # TODO: [Logic-Issue-009]

@@ -16,10 +16,12 @@ login_schema = LoginSchema()
 def register():
     body = request.get_json(silent=True)
     if body is None:
+        current_app.logger.info("register: missing or invalid JSON body")
         return jsonify({"error": "invalid_json", "message": "Request body is required."}), 400
 
     validated, errors = validate_schema(register_schema, body)
     if errors:
+        current_app.logger.info("register: validation_error %s", errors)
         return jsonify({"error": "validation_error", "fields": errors}), 422
 
     # Purpose:  Hash password, create user in MongoDB, issue JWT.
@@ -39,10 +41,12 @@ def register():
 def login():
     body = request.get_json(silent=True)
     if body is None:
+        current_app.logger.info("login: missing or invalid JSON body")
         return jsonify({"error": "invalid_json", "message": "Request body is required."}), 400
 
     validated, errors = validate_schema(login_schema, body)
     if errors:
+        current_app.logger.info("login: validation_error %s", errors)
         return jsonify({"error": "validation_error", "fields": errors}), 422
 
     # Purpose:  Authenticate user and issue JWT.
