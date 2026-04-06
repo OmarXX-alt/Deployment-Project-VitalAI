@@ -1,4 +1,5 @@
 import os
+import sys
 
 from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template
@@ -60,8 +61,13 @@ def create_app(config_name=None):
     return app
 
 
+def _should_create_default_app() -> bool:
+    env = os.getenv("FLASK_ENV", "production").lower()
+    return "pytest" not in sys.modules and env != "testing"
+
+
 # Module-level app instance for gunicorn WSGI
-app = create_app()
+app = create_app() if _should_create_default_app() else None
 
 
 if __name__ == "__main__":
