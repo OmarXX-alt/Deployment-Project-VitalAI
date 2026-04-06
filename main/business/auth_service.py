@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
-
 from main.persistence.extensions import mongo
 from main.persistence.models import UserDocument, UserPublic
 

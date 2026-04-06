@@ -8,7 +8,9 @@ def test_index_route_returns_html():
     response = client.get("/")
 
     assert response.status_code == 200
-    assert b"<!doctype html>" in response.data
+    body = response.data.lower()
+    assert b"doctype html" in body
+    assert b"vitalai" in body
 
 
 def test_health_route_returns_ok():

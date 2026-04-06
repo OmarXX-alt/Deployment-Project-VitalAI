@@ -60,6 +60,7 @@ def create_app(config_name=None):
     return app
 
 
+# Module-level app instance for gunicorn WSGI
 app = create_app()
 
 
