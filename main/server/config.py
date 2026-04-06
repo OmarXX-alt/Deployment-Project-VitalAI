@@ -28,7 +28,6 @@ class ProductionConfig(Config):
     # INIT_DB is inherited from Config - uses environment variable or defaults to false
 
 
-
 CONFIG_BY_NAME = {
     "development": DevelopmentConfig,
     "testing": TestingConfig,
