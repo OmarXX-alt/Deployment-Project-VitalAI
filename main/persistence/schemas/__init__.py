@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .auth_schema import LoginSchema, RegisterSchema
+from .auth_schema import LoginSchema, RegisterSchema, validate_schema
 from .log_schemas import (
     HydrationLogSchema,
     MealLogSchema,
@@ -13,6 +13,7 @@ from .log_schemas import (
 __all__ = [
     "LoginSchema",
     "RegisterSchema",
+    "validate_schema",
     "ProfileUpdateSchema",
     "WorkoutLogSchema",
     "MealLogSchema",
