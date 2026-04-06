@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template
 
 from main.persistence.extensions import mongo
 from main.server.config import get_config
@@ -8,7 +8,13 @@ from main.server.errors import register_error_handlers
 
 
 def create_app(config_name=None):
-    app = Flask(__name__)
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    app = Flask(
+        __name__,
+        template_folder=os.path.join(base_dir, "application", "templates"),
+        static_folder=os.path.join(base_dir, "application", "static"),
+        static_url_path="/static",
+    )
 
     config_class = get_config(config_name)
     app.config.from_object(config_class)
@@ -31,22 +37,19 @@ def create_app(config_name=None):
 
     @app.get("/")
     def index():
-        return """
-        <!doctype html>
-        <html lang="en">
-            <head>
-                <meta charset="utf-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1" />
-                <title>VitalAI</title>
-            </head>
-            <body>
-                <h1>VitalAI</h1>
-                <p>
-                    <a href="/health">Health Check</a>
-                </p>
-            </body>
-        </html>
-        """
+        return render_template("index.html")
+
+    @app.get("/login")
+    def login_page():
+        return render_template("login.html")
+
+    @app.get("/register")
+    def register_page():
+        return render_template("register.html")
+
+    @app.get("/dashboard")
+    def dashboard_page():
+        return render_template("dashboard.html")
 
     @app.get("/health")
     def health():
