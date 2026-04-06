@@ -3,19 +3,18 @@ import sys
 
 from flask import Flask, jsonify
 
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-if PROJECT_ROOT not in sys.path:
-    sys.path.insert(0, PROJECT_ROOT)
-
-from main.persistence.database import db
-
 
 def create_app():
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+
+    from main.persistence.database import db
+
     app = Flask(__name__)
 
     # Initialize the database connection with the Flask app
     db.init_app(app)
-
 
     @app.get("/")
     def index():
@@ -35,7 +34,6 @@ def create_app():
             </body>
         </html>
         """
-
 
     @app.get("/health")
     def health():
