@@ -16,6 +16,7 @@ class DatabaseConnection:
         Initialize the MongoDB connection using the Flask app configuration.
         """
         # Get MongoDB URI from environment variable or use default local connection
+        # mongo_uri = os.environ.get("MONGO_URI", "mongodb+srv://localhost:27017/vital_ai")
         mongo_uri = os.environ.get("MONGO_URI", "mongodb://localhost:27017/vital_ai")
         app.config.setdefault("MONGO_URI", mongo_uri)
 

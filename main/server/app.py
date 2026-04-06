@@ -1,3 +1,9 @@
+import sys
+import os
+
+# Make main/persistence importable as 'database' (bare import used in repositories)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "persistence"))
+
 from flask import Flask, jsonify
 from main.persistence.database import db
 
