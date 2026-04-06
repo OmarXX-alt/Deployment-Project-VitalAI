@@ -5,7 +5,7 @@ class Config:
     DEBUG = False
     TESTING = False
     INIT_DB = True
-    MONGO_URI = os.getenv("MONGO_URI")
+    MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/vitalai")
     JWT_SECRET = os.getenv("JWT_SECRET", "dev-jwt-secret")
     JWT_EXPIRY_HOURS = int(os.getenv("JWT_EXPIRY_HOURS", "24"))
 
