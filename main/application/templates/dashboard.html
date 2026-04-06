@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>VitalAI - Dashboard</title>
-    <link rel="stylesheet" href="/main/application/static/styles.css">
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
     <div class="dashboard-container">
@@ -28,7 +28,7 @@
             <input type="number" id="workout-duration" placeholder="Minutes" min="0" max="1440">
             <select id="workout-intensity">
                 <option value="low">Low</option>
-                <option value="medium">Medium</option>
+                <option value="moderate">Moderate</option>
                 <option value="high">High</option>
             </select>
             <button onclick="logWorkout()">Save Workout</button>
@@ -99,12 +99,12 @@
         
         function logMeal() {
             const data = {
-                food: document.getElementById('meal-food').value,
+                meal_name: document.getElementById('meal-food').value,
                 calories: parseInt(document.getElementById('meal-cals').value),
-                protein: parseInt(document.getElementById('meal-protein').value)
+                meal_type: 'lunch'
             };
             
-            fetch('/api/meals', {
+            fetch('/api/logs/meal', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -122,12 +122,12 @@
 
         function logWorkout() {
             const data = {
-                type: document.getElementById('workout-type').value,
-                duration: parseInt(document.getElementById('workout-duration').value),
+                exercise_type: document.getElementById('workout-type').value,
+                duration_minutes: parseInt(document.getElementById('workout-duration').value),
                 intensity: document.getElementById('workout-intensity').value
             };
             
-            fetch('/api/workouts', {
+            fetch('/api/logs/workout', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -144,12 +144,18 @@
         }
 
         function logSleep() {
+            const hours = parseFloat(document.getElementById('sleep-hours').value);
+            const qualityLabel = document.getElementById('sleep-quality').value;
+            const qualityMap = { poor: 1, fair: 2, good: 4, excellent: 5 };
+            const now = new Date();
+            const start = new Date(now.getTime() - (isNaN(hours) ? 0 : hours * 60 * 60 * 1000));
             const data = {
-                hours: parseFloat(document.getElementById('sleep-hours').value),
-                quality: document.getElementById('sleep-quality').value
+                sleep_start: start.toISOString(),
+                sleep_end: now.toISOString(),
+                quality_score: qualityMap[qualityLabel] || 3
             };
             
-            fetch('/api/sleep', {
+            fetch('/api/logs/sleep', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -167,10 +173,10 @@
 
         function logWater() {
             const data = {
-                ml: parseInt(document.getElementById('water-ml').value)
+                amount_ml: parseInt(document.getElementById('water-ml').value)
             };
             
-            fetch('/api/hydration', {
+            fetch('/api/logs/hydration', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -187,12 +193,14 @@
         }
 
         function logMood() {
+            const sliderValue = parseInt(document.getElementById('mood-rating').value);
+            const moodScore = Math.min(5, Math.max(1, Math.ceil(sliderValue / 2)));
             const data = {
-                rating: parseInt(document.getElementById('mood-rating').value),
-                notes: document.getElementById('mood-notes').value
+                mood_score: moodScore,
+                note: document.getElementById('mood-notes').value
             };
             
-            fetch('/api/moods', {
+            fetch('/api/logs/mood', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
