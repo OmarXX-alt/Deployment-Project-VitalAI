@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+
+from bson import ObjectId
 
 from main.persistence.repositories import (
     hydration_repository,
@@ -263,3 +265,171 @@ def format_context_for_prompt(context: dict[str, str]) -> str:
         if key not in ordered_keys:
             lines.append(f"- {value}")
     return "\n".join(lines[:5])
+
+
+def _safe_object_id(user_id: str) -> ObjectId | None:
+    """Return ObjectId for a user_id or None."""
+    try:
+        return ObjectId(user_id)
+    except Exception:
+        return None
+
+
+def _date_key(value: object) -> str | None:
+    """Return ISO date key if value is a datetime."""
+    if isinstance(value, datetime):
+        return value.date().isoformat()
+    return None
+
+
+def get_meal_context(user_id: str, db) -> dict:
+    """Return 7-day meal summary for the given user."""
+    try:
+        cutoff = datetime.utcnow() - timedelta(days=7)
+        cursor = db["meal_logs"].find(
+            {"user_id": user_id, "created_at": {"$gte": cutoff}}
+        )
+        daily: dict[str, float] = {}
+        meal_count = 0
+        for doc in cursor:
+            meal_count += 1
+            calories = doc.get("calories")
+            calories_val = (
+                float(calories) if isinstance(calories, (int, float)) else 0.0
+            )
+            day_key = _date_key(doc.get("created_at"))
+            if day_key:
+                daily[day_key] = daily.get(day_key, 0.0) + calories_val
+        daily_list = list(daily.values())
+        avg_calories = (
+            sum(daily_list) / len(daily_list) if daily_list else 0.0
+        )
+        return {
+            "daily_calories": daily_list,
+            "meal_count": meal_count,
+            "avg_calories": avg_calories,
+        }
+    except Exception:
+        return {}
+
+
+def get_workout_context(user_id: str, db) -> dict:
+    """Return 7-day workout summary for the given user."""
+    try:
+        cutoff = datetime.utcnow() - timedelta(days=7)
+        cursor = db["workout_logs"].find(
+            {"user_id": user_id, "created_at": {"$gte": cutoff}}
+        )
+        sessions = 0
+        total_minutes = 0
+        types: list[str] = []
+        for doc in cursor:
+            sessions += 1
+            duration = doc.get("duration_minutes", doc.get("duration_min"))
+            if isinstance(duration, (int, float)):
+                total_minutes += int(duration)
+            exercise_type = doc.get("exercise_type")
+            if isinstance(exercise_type, str) and exercise_type:
+                types.append(exercise_type)
+        return {
+            "sessions": sessions,
+            "total_minutes": total_minutes,
+            "types": types,
+        }
+    except Exception:
+        return {}
+
+
+def get_sleep_context(user_id: str, db) -> dict:
+    """Return 7-day sleep summary for the given user."""
+    try:
+        cutoff = datetime.utcnow() - timedelta(days=7)
+        cursor = db["sleep_logs"].find(
+            {"user_id": user_id, "created_at": {"$gte": cutoff}}
+        )
+        entries = 0
+        durations: list[float] = []
+        qualities: list[float] = []
+        for doc in cursor:
+            entries += 1
+            duration_min = doc.get("duration_minutes")
+            duration_hrs = doc.get("duration_hrs")
+            if isinstance(duration_min, (int, float)):
+                durations.append(float(duration_min) / 60.0)
+            elif isinstance(duration_hrs, (int, float)):
+                durations.append(float(duration_hrs))
+            quality = doc.get("quality_score", doc.get("quality"))
+            if isinstance(quality, (int, float)):
+                qualities.append(float(quality))
+        avg_duration = sum(durations) / len(durations) if durations else 0.0
+        avg_quality = sum(qualities) / len(qualities) if qualities else 0.0
+        return {
+            "avg_duration_hours": avg_duration,
+            "avg_quality": avg_quality,
+            "entries": entries,
+        }
+    except Exception:
+        return {}
+
+
+def get_hydration_context(user_id: str, db) -> dict:
+    """Return 7-day hydration summary for the given user."""
+    try:
+        cutoff = datetime.utcnow() - timedelta(days=7)
+        cursor = db["hydration_logs"].find(
+            {"user_id": user_id, "created_at": {"$gte": cutoff}}
+        )
+        daily: dict[str, float] = {}
+        for doc in cursor:
+            amount = doc.get("amount_ml")
+            amount_val = (
+                float(amount) if isinstance(amount, (int, float)) else 0.0
+            )
+            day_key = _date_key(doc.get("created_at"))
+            if day_key:
+                daily[day_key] = daily.get(day_key, 0.0) + amount_val
+        daily_list = list(daily.values())
+        avg_ml = sum(daily_list) / len(daily_list) if daily_list else 0.0
+        target_ml = None
+        obj_id = _safe_object_id(user_id)
+        if obj_id is not None:
+            user = db["users"].find_one({"_id": obj_id})
+        else:
+            user = None
+        if isinstance(user, dict):
+            goal = user.get("hydration_goal")
+            if goal is None:
+                goal = user.get("hydration_goal_ml")
+            if isinstance(goal, (int, float)):
+                target_ml = int(goal)
+        return {
+            "daily_totals_ml": daily_list,
+            "target_ml": target_ml or 0,
+            "avg_ml": avg_ml,
+        }
+    except Exception:
+        return {}
+
+
+def get_mood_context(user_id: str, db) -> dict:
+    """Return 7-day mood summary for the given user."""
+    try:
+        cutoff = datetime.utcnow() - timedelta(days=7)
+        cursor = db["mood_logs"].find(
+            {"user_id": user_id, "created_at": {"$gte": cutoff}}
+        )
+        scores: list[float] = []
+        entries = 0
+        for doc in cursor:
+            entries += 1
+            score = doc.get("mood_score", doc.get("mood_rating"))
+            if isinstance(score, (int, float)):
+                scores.append(float(score))
+        avg_score = sum(scores) / len(scores) if scores else 0.0
+        return {
+            "avg_score": avg_score,
+            "scores": scores,
+            "entries": entries,
+        }
+    except Exception:
+        return {}

@@ -4,7 +4,7 @@ import logging
 
 from pymongo.errors import DuplicateKeyError, OperationFailure, WriteError
 
-from database import get_db
+from main.persistence.db import get_db
 from main.business.utils.serialization import to_json_serializable
 from main.business.utils.validators import validate_object_id
 
