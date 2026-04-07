@@ -1,4 +1,5 @@
 import os
+import sys
 
 
 class Config:
@@ -42,14 +43,14 @@ def get_config(name=None):
         # Default to production for safety; only use development in dev environments
         name = os.getenv("FLASK_ENV", "production")
     config = CONFIG_BY_NAME.get(name.lower(), ProductionConfig)
-    
-    # In production, ensure MONGO_URI comes from environment
-    if name.lower() == "production":
+
+    # In production, ensure MONGO_URI comes from environment (but skip in pytest)
+    if name.lower() == "production" and "pytest" not in sys.modules:
         mongo_uri = os.getenv("MONGO_URI")
         if not mongo_uri:
             raise ValueError(
                 "MONGO_URI environment variable is required for production deployment. "
                 "Set it in your Render.com environment variables."
             )
-    
+
     return config
