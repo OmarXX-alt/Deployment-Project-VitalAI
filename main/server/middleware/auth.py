@@ -16,7 +16,7 @@ def require_auth(func):
                 jsonify(
                     {
                         "error": "token_missing",
-                        "message": "Authorization header missing or malformed.",
+                        "message": "Auth header missing or malformed.",
                     }
                 ),
                 401,

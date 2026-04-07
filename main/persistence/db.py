@@ -26,3 +26,13 @@ def get_db():
     _client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
     _db = _client[db_name]
     return _db
+
+
+def close_db(e=None):
+    """Close the database connection and clean up singletons."""
+    global _client, _db
+    if _client is not None:
+        _client.close()
+        _client = None
+        _db = None
+

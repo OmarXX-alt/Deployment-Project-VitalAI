@@ -1,7 +1,7 @@
 """Main application factory and startup logic."""
 
 import os
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template
 from main.server.config import get_config
 from main.server.errors import register_error_handlers
 
@@ -52,16 +52,33 @@ def create_app(config_name=None):
     from main.application.logs import logs_bp
     from main.application.profile import profile_bp
     from main.server.routes.health import health_bp
+    from main.persistence.db import close_db
+
+    # Register teardown
+    app.teardown_appcontext(close_db)
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(profile_bp)
     app.register_blueprint(logs_bp)
+
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(health_bp)
 
     @app.get("/")
     def index():
-        return jsonify({"message": "Welcome to VitalAI"}), 200
+        return render_template("index.html")
+
+    @app.get("/login")
+    def login_page():
+        return render_template("login.html")
+
+    @app.get("/register")
+    def register_page():
+        return render_template("register.html")
+
+    @app.get("/dashboard")
+    def dashboard_page():
+        return render_template("dashboard.html")
 
     return app
 

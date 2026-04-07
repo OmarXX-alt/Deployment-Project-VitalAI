@@ -13,8 +13,13 @@ dashboard_bp = Blueprint("dashboard", __name__)
 @require_auth
 def dashboard():
     # TODO: [Logic-Issue-012]
-    data = aggregation_service.get_dashboard_data(g.user_id)
-    return jsonify(data), 200
+    try:
+        data = aggregation_service.get_dashboard_data(g.user_id)
+        return jsonify(data), 200
+    except Exception as e:
+        current_app.logger.error("Dashboard error: %s", e)
+        return jsonify({"error": "Failed to load dashboard"}), 500
+
 
 
 @dashboard_bp.get("/api/insights/weekly")

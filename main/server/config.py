@@ -37,7 +37,8 @@ class TestingConfig(Config):
 class ProductionConfig(Config):
     """Production settings requiring explicit environment variables."""
     DEBUG = False
-    # FIX: We don't default MONGO_URI here to force validation failure if absent
+    # FIX: Do not default MONGO_URI here to force validation failure if absent
+    MONGO_URI = os.getenv("MONGO_URI")
 
 
 CONFIG_BY_NAME = {
