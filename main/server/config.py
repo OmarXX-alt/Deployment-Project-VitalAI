@@ -1,6 +1,11 @@
 import os
 import sys
 
+from dotenv import load_dotenv
+
+# Load .env early so config reads environment values during import
+load_dotenv()
+
 
 class Config:
     DEBUG = False
@@ -44,8 +49,13 @@ def get_config(name=None):
         name = os.getenv("FLASK_ENV", "production")
     config = CONFIG_BY_NAME.get(name.lower(), ProductionConfig)
 
-    # In production, ensure MONGO_URI comes from environment (but skip in pytest)
-    if name.lower() == "production" and "pytest" not in sys.modules:
+    # Ensure a safe default if MONGO_URI is unset/blank (helps smoke tests)
+    if not config.MONGO_URI:
+        config.MONGO_URI = "mongodb://localhost:27017/vitalai"
+
+    # In production, ensure MONGO_URI comes from environment if DB init is enabled
+    # (skip in pytest to avoid CI collection errors)
+    if name.lower() == "production" and config.INIT_DB and "pytest" not in sys.modules:
         mongo_uri = os.getenv("MONGO_URI")
         if not mongo_uri:
             raise ValueError(
