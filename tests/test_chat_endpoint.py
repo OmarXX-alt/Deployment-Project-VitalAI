@@ -1,0 +1,146 @@
+from __future__ import annotations
+
+from datetime import datetime, timedelta, timezone
+
+import jwt
+from bson import ObjectId
+
+from main.application import chat as chat_module
+
+
+def _make_token(client, user_id):
+    secret = client.application.config["JWT_SECRET"]
+    payload = {
+        "user_id": user_id,
+        "exp": datetime.now(timezone.utc) + timedelta(hours=1),
+    }
+    return jwt.encode(payload, secret, algorithm="HS256")
+
+
+def _auth_headers(client, user_id):
+    token = _make_token(client, user_id)
+    return {"Authorization": f"Bearer {token}"}
+
+
+class FakeInsertResult:
+    def __init__(self, inserted_id):
+        self.inserted_id = inserted_id
+
+
+class FakeCollection:
+    def __init__(self):
+        self.docs = {}
+
+    def find_one(self, query):
+        for doc in self.docs.values():
+            if doc.get("_id") == query.get("_id") and doc.get(
+                "user_id"
+            ) == query.get("user_id"):
+                return doc
+        return None
+
+    def insert_one(self, doc):
+        new_id = ObjectId()
+        stored = dict(doc)
+        stored["_id"] = new_id
+        self.docs[new_id] = stored
+        return FakeInsertResult(new_id)
+
+    def update_one(self, query, update):
+        doc = self.find_one(query)
+        if not doc:
+            return None
+        if isinstance(update, dict) and "$set" in update:
+            doc.update(update["$set"])
+        return None
+
+
+class FakeDB:
+    def __init__(self):
+        self.chat_sessions = FakeCollection()
+
+    def __getitem__(self, name):
+        if name == "chat_sessions":
+            return self.chat_sessions
+        raise KeyError(name)
+
+
+def test_chat_creates_session(client, monkeypatch):
+    fake_db = FakeDB()
+    monkeypatch.setattr(chat_module, "get_db", lambda: fake_db)
+    monkeypatch.setattr(
+        chat_module.aggregation_service,
+        "build_context",
+        lambda *args, **kwargs: {"ctx": "ok"},
+    )
+    monkeypatch.setattr(
+        chat_module, "call_gemini", lambda prompt: "Hello"
+    )
+
+    user_id = str(ObjectId())
+    response = client.post(
+        "/api/chat",
+        headers=_auth_headers(client, user_id),
+        json={"message": "Hi"},
+    )
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["reply"] == "Hello"
+    assert data["session_id"]
+    assert len(fake_db.chat_sessions.docs) == 1
+
+    stored = next(iter(fake_db.chat_sessions.docs.values()))
+    assert len(stored["messages"]) == 2
+
+
+def test_chat_reuses_session(client, monkeypatch):
+    fake_db = FakeDB()
+    monkeypatch.setattr(chat_module, "get_db", lambda: fake_db)
+    monkeypatch.setattr(
+        chat_module.aggregation_service,
+        "build_context",
+        lambda *args, **kwargs: {"ctx": "ok"},
+    )
+    monkeypatch.setattr(
+        chat_module, "call_gemini", lambda prompt: "First"
+    )
+
+    user_id = str(ObjectId())
+    first = client.post(
+        "/api/chat",
+        headers=_auth_headers(client, user_id),
+        json={"message": "Hello"},
+    )
+    session_id = first.get_json()["session_id"]
+
+    monkeypatch.setattr(
+        chat_module, "call_gemini", lambda prompt: "Second"
+    )
+
+    second = client.post(
+        "/api/chat",
+        headers=_auth_headers(client, user_id),
+        json={"message": "Follow-up", "session_id": session_id},
+    )
+
+    assert second.status_code == 200
+    stored = next(iter(fake_db.chat_sessions.docs.values()))
+    assert len(stored["messages"]) == 4
+    assert stored["messages"][-1]["content"] == "Second"
+
+
+def test_chat_invalid_session_id(client, monkeypatch):
+    fake_db = FakeDB()
+    monkeypatch.setattr(chat_module, "get_db", lambda: fake_db)
+
+    user_id = str(ObjectId())
+    response = client.post(
+        "/api/chat",
+        headers=_auth_headers(client, user_id),
+        json={"message": "Hi", "session_id": "bad-id"},
+    )
+
+    assert response.status_code == 400
+    data = response.get_json()
+    assert data["error"] == "invalid_session_id"
