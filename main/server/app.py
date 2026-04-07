@@ -27,7 +27,7 @@ def create_app(config_name=None):
     app.config.from_object(config_class)
 
     # Initialize the database connection with the Flask app
-    if app.config.get("INIT_DB", True) and not _is_pytest_run():
+    if app.config.get("INIT_DB", False) and not _is_pytest_run():
         mongo.init_app(app)
 
     register_error_handlers(app)
