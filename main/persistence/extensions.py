@@ -19,11 +19,17 @@ class MongoDB:
         self.db = None
 
     def init_app(self, app: Flask) -> None:
-        mongo_uri = app.config.get("MONGO_URI") or os.getenv("MONGO_URI")
+        # Priority: environment variable > app config > default
+        mongo_uri = os.getenv("MONGO_URI") or app.config.get("MONGO_URI")
         if not mongo_uri:
+            # Only fallback to localhost in non-production environments
+            if os.getenv("FLASK_ENV") == "production":
+                logger.error("MONGO_URI not set in production environment!")
+                raise ValueError("MONGO_URI environment variable is required for production deployment.")
             logger.warning("MONGO_URI not set; falling back to local MongoDB.")
             mongo_uri = "mongodb://localhost:27017/vitalai"
         app.config.setdefault("MONGO_URI", mongo_uri)
+        logger.info("MongoDB connection URI: %s", mongo_uri.split("@")[0] + "@..." if "@" in mongo_uri else mongo_uri)
 
         try:
             self.client = MongoClient(

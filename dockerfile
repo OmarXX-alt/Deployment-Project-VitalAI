@@ -13,6 +13,7 @@ COPY . .
 
 # Since Render is in use: Expose the Port the application will run on
 ENV PORT=5000
+ENV FLASK_ENV=production
 ENV INIT_DB=false
 EXPOSE $PORT
 

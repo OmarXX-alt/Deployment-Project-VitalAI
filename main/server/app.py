@@ -2,6 +2,11 @@ import os
 import sys
 
 from dotenv import load_dotenv
+
+# Load environment variables FIRST, before any other imports
+# This ensures INIT_DB and other env vars are available when Config is evaluated
+load_dotenv()
+
 from flask import Flask, jsonify, render_template
 
 from main.persistence.extensions import mongo
@@ -14,7 +19,8 @@ def _is_pytest_run() -> bool:
 
 
 def create_app(config_name=None):
-    load_dotenv()
+    # .env is already loaded at module import time (see top of this file)
+    # Skip reload in production to respect environment variables
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     app = Flask(
         __name__,
