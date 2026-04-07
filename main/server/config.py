@@ -53,16 +53,70 @@ def get_config(name=None):
     config = CONFIG_BY_NAME.get(name.lower(), ProductionConfig)
 
     # Ensure a safe default if MONGO_URI is unset/blank (helps smoke tests)
-    if not config.MONGO_URI:
-        config.MONGO_URI = "mongodb://localhost:27017/vitalai"
+    import os
 
-    # In production, ensure MONGO_URI comes from environment if DB init is enabled
-    # (skip in pytest to avoid CI collection errors)
-    if name.lower() == "production" and config.INIT_DB and "pytest" not in sys.modules:
-        if not config.MONGO_URI or config.MONGO_URI.startswith("mongodb://localhost"):
-            logger.warning(
-                "MONGO_URI is not set for production; falling back to localhost. "
-                "Set MONGO_URI in Render.com environment variables."
-            )
+    from dotenv import load_dotenv
 
-    return config
+
+    class Config:
+        """Base config with defaults populated from environment variables."""
+
+        DEBUG = False
+        TESTING = False
+        MONGO_URI = os.getenv("MONGO_URI")
+        DB_NAME = os.getenv("DB_NAME")
+        JWT_SECRET = os.getenv("JWT_SECRET")
+        JWT_EXPIRY_HOURS = int(os.getenv("JWT_EXPIRY_HOURS", "24"))
+
+
+    class DevelopmentConfig(Config):
+        """Development config loads settings from .env via python-dotenv."""
+
+        DEBUG = True
+
+
+    class TestingConfig(Config):
+        """Testing config never touches a real MongoDB instance."""
+
+        TESTING = True
+        MONGO_URI = "mongodb://localhost:27017/test_db"
+        DB_NAME = "test_db"
+
+
+    class ProductionConfig(Config):
+        """Production config relies entirely on environment variables."""
+
+        DEBUG = False
+
+
+    def _apply_env(config_cls: type[Config]) -> type[Config]:
+        """Refresh config values from environment after loading .env."""
+
+        config_cls.MONGO_URI = os.getenv("MONGO_URI")
+        config_cls.DB_NAME = os.getenv("DB_NAME")
+        config_cls.JWT_SECRET = os.getenv("JWT_SECRET")
+        config_cls.JWT_EXPIRY_HOURS = int(os.getenv("JWT_EXPIRY_HOURS", "24"))
+        return config_cls
+
+
+    def get_config(env_name: str | None = None) -> type[Config]:
+        """Return the config class based on FLASK_ENV."""
+
+        env = (env_name or os.getenv("FLASK_ENV", "development")).lower()
+
+        if env == "development":
+            # Load .env only for development to avoid overriding Render env vars.
+            load_dotenv()
+            return _apply_env(DevelopmentConfig)
+
+        if env == "testing":
+            return TestingConfig
+
+        if env == "production":
+            if not os.getenv("MONGO_URI"):
+                raise EnvironmentError(
+                    "MONGO_URI environment variable is required for production."
+                )
+            return _apply_env(ProductionConfig)
+
+        return _apply_env(DevelopmentConfig)

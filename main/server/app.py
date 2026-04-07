@@ -3,7 +3,6 @@ import sys
 
 from flask import Flask, jsonify, render_template
 
-from main.persistence.extensions import mongo
 from main.server.config import get_config
 from main.server.errors import register_error_handlers
 
@@ -12,9 +11,25 @@ def _is_pytest_run() -> bool:
     return "pytest" in sys.modules or os.getenv("PYTEST_CURRENT_TEST") is not None
 
 
+def validate_env() -> None:
+    """Validate required production environment variables at startup."""
+
+    missing = [
+        name
+        for name in ("MONGO_URI", "DB_NAME")
+        if not os.getenv(name)
+    ]
+    if missing:
+        raise EnvironmentError(
+            "Missing required environment variables: "
+            + ", ".join(missing)
+        )
+
+
 def create_app(config_name=None):
-    # .env is already loaded at module import time (see top of this file)
-    # Skip reload in production to respect environment variables
+    """Create and configure the Flask application."""
+
+    env_name = os.getenv("FLASK_ENV", "development")
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     app = Flask(
         __name__,
@@ -23,12 +38,11 @@ def create_app(config_name=None):
         static_url_path="/static",
     )
 
-    config_class = get_config(config_name)
+    config_class = get_config(config_name or env_name)
     app.config.from_object(config_class)
 
-    # Initialize the database connection with the Flask app
-    if app.config.get("INIT_DB", False) and not _is_pytest_run():
-        mongo.init_app(app)
+    if env_name.lower() == "production":
+        validate_env()
 
     register_error_handlers(app)
 
@@ -60,7 +74,8 @@ def create_app(config_name=None):
 
     @app.get("/health")
     def health():
-        return jsonify({"status": "OK"}), 200
+        # Purpose: health probe must never depend on MongoDB.
+        return jsonify({"status": "ok"}), 200
 
     return app
 
