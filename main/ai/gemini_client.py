@@ -88,6 +88,9 @@ def build_workout_prompt(new_entry: dict, context: dict) -> str:
     return (
         f"{SYSTEM_INSTRUCTION}\n"
         "Return only the reaction message, no preamble, no labels.\n\n"
+        "Focus on recovery time based on intensity and duration. "
+        "Mention training balance from the last 7 days and give one "
+        "concrete suggestion for the next session.\n\n"
         f"New workout entry: {new_entry}\n"
         f"Context (7 days): {context}\n"
     )
@@ -98,6 +101,8 @@ def build_sleep_prompt(new_entry: dict, context: dict) -> str:
     return (
         f"{SYSTEM_INSTRUCTION}\n"
         "Return only the reaction message, no preamble, no labels.\n\n"
+        "Compare tonight's duration and quality to the 7-day average. "
+        "Give one recovery or habit suggestion tied to the numbers.\n\n"
         f"New sleep entry: {new_entry}\n"
         f"Context (7 days): {context}\n"
     )
@@ -108,6 +113,8 @@ def build_hydration_prompt(new_entry: dict, context: dict) -> str:
     return (
         f"{SYSTEM_INSTRUCTION}\n"
         "Return only the reaction message, no preamble, no labels.\n\n"
+        "Highlight progress toward the daily target from the context. "
+        "Adjust advice if a workout was logged today.\n\n"
         f"New hydration entry: {new_entry}\n"
         f"Context (7 days): {context}\n"
     )
@@ -118,6 +125,8 @@ def build_mood_prompt(new_entry: dict, context: dict) -> str:
     return (
         f"{SYSTEM_INSTRUCTION}\n"
         "Return only the reaction message, no preamble, no labels.\n\n"
+        "Connect today's mood score to 7-day sleep and workout patterns. "
+        "Give one actionable suggestion tied to the score.\n\n"
         f"New mood entry: {new_entry}\n"
         f"Context (7 days): {context}\n"
     )

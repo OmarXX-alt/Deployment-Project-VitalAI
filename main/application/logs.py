@@ -2,9 +2,22 @@ from __future__ import annotations
 
 from flask import Blueprint, current_app, g, jsonify, request
 
-from main.ai.gemini_client import build_meal_prompt, call_gemini
+from main.ai.gemini_client import (
+    build_hydration_prompt,
+    build_meal_prompt,
+    build_mood_prompt,
+    build_sleep_prompt,
+    build_workout_prompt,
+    call_gemini,
+)
 from main.business import log_service
-from main.business.utils.aggregation import get_meal_context
+from main.business.utils.aggregation import (
+    get_hydration_context,
+    get_meal_context,
+    get_mood_context,
+    get_sleep_context,
+    get_workout_context,
+)
 from main.persistence.db import get_db
 from main.persistence.schemas import (
     HydrationLogSchema,
@@ -62,6 +75,27 @@ def log_workout():
         validated["intensity"],
         validated.get("logged_at"),
     )
+    reaction_message = None
+    try:
+        db = get_db()
+        context = get_workout_context(g.user_id, db)
+        new_entry = {
+            "exercise_type": response_body.get("exercise_type"),
+            "duration_minutes": response_body.get("duration_minutes"),
+            "intensity": response_body.get("intensity"),
+            "sets": response_body.get("sets"),
+            "reps": response_body.get("reps"),
+        }
+        prompt = build_workout_prompt(new_entry, context)
+        reaction_message = call_gemini(prompt)
+    except Exception as exc:
+        current_app.logger.warning("workout AI reaction failed: %s", exc)
+
+    response_body["reaction"] = {
+        "type": "workout",
+        "message": reaction_message,
+        "tags": [],
+    }
     return jsonify(response_body), status
 
 
@@ -145,6 +179,26 @@ def log_sleep():
         validated["sleep_end"],
         validated["quality_score"],
     )
+    reaction_message = None
+    try:
+        db = get_db()
+        context = get_sleep_context(g.user_id, db)
+        new_entry = {
+            "sleep_start": response_body.get("sleep_start"),
+            "sleep_end": response_body.get("sleep_end"),
+            "duration_minutes": response_body.get("duration_minutes"),
+            "quality_score": response_body.get("quality_score"),
+        }
+        prompt = build_sleep_prompt(new_entry, context)
+        reaction_message = call_gemini(prompt)
+    except Exception as exc:
+        current_app.logger.warning("sleep AI reaction failed: %s", exc)
+
+    response_body["reaction"] = {
+        "type": "sleep",
+        "message": reaction_message,
+        "tags": [],
+    }
     return jsonify(response_body), status
 
 
@@ -175,6 +229,25 @@ def log_hydration():
         validated["amount_ml"],
         validated.get("logged_at"),
     )
+    reaction_message = None
+    try:
+        db = get_db()
+        context = get_hydration_context(g.user_id, db)
+        new_entry = {
+            "amount_ml": response_body.get("amount_ml"),
+            "daily_total_ml": response_body.get("daily_total_ml"),
+            "pct_of_goal": response_body.get("pct_of_goal"),
+        }
+        prompt = build_hydration_prompt(new_entry, context)
+        reaction_message = call_gemini(prompt)
+    except Exception as exc:
+        current_app.logger.warning("hydration AI reaction failed: %s", exc)
+
+    response_body["reaction"] = {
+        "type": "hydration",
+        "message": reaction_message,
+        "tags": [],
+    }
     return jsonify(response_body), status
 
 
@@ -205,10 +278,28 @@ def log_mood():
         validated["mood_score"],
         validated.get("note"),
     )
+    reaction_message = None
+    try:
+        db = get_db()
+        context = get_mood_context(g.user_id, db)
+        new_entry = {
+            "mood_score": response_body.get("mood_score"),
+            "note": response_body.get("note"),
+            "date": response_body.get("date"),
+        }
+        prompt = build_mood_prompt(new_entry, context)
+        reaction_message = call_gemini(prompt)
+    except Exception as exc:
+        current_app.logger.warning("mood AI reaction failed: %s", exc)
 
     response_body["wellness_resource"] = (
         WELLNESS_RESOURCE if validated["mood_score"] == 1 else None
     )
+    response_body["reaction"] = {
+        "type": "mood",
+        "message": reaction_message,
+        "tags": [],
+    }
     return jsonify(response_body), status
 
 
