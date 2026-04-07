@@ -56,8 +56,7 @@ def get_config(name=None):
     # In production, ensure MONGO_URI comes from environment if DB init is enabled
     # (skip in pytest to avoid CI collection errors)
     if name.lower() == "production" and config.INIT_DB and "pytest" not in sys.modules:
-        mongo_uri = os.getenv("MONGO_URI")
-        if not mongo_uri:
+        if not config.MONGO_URI or config.MONGO_URI.startswith("mongodb://localhost"):
             raise ValueError(
                 "MONGO_URI environment variable is required for production deployment. "
                 "Set it in your Render.com environment variables."
