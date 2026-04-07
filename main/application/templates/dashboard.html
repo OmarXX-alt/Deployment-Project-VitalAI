@@ -3,6 +3,7 @@
 <head>
     <title>VitalAI - Dashboard</title>
     <link rel="stylesheet" href="/main/application/static/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="dashboard-container">
@@ -11,43 +12,61 @@
             <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
 
-        <!-- MEAL LOGGER -->
-        <div class="card">
-            <h3>🍽️ Log Meal</h3>
-            <div class="card-row">
-                <div class="log-form">
+        <!-- CHARTS SECTION (Issue #23) -->
+        <div class="charts-container">
+            <div class="chart-card">
+                <h3>📊 Weekly Calories</h3>
+                <canvas id="caloriesChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>😴 Weekly Sleep</h3>
+                <canvas id="sleepChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>💪 Weekly Workouts</h3>
+                <canvas id="workoutsChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>💧 Weekly Hydration</h3>
+                <canvas id="hydrationChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>😊 Weekly Mood</h3>
+                <canvas id="moodChart"></canvas>
+            </div>
+        </div>
+
+        <!-- LOG FORMS SECTION -->
+        <div class="log-section">
+            <h3>Log Your Health Data</h3>
+            <div class="log-grid">
+                <!-- MEAL LOGGER -->
+                <div class="log-card">
+                    <h4>🍽️ Log Meal</h4>
                     <input type="text" id="meal-food" placeholder="Food item">
                     <input type="number" id="meal-cals" placeholder="Calories" min="0">
                     <input type="number" id="meal-protein" placeholder="Protein (g)" min="0">
                     <button onclick="logMeal()">Save Meal</button>
+                    <div id="meal-ai" class="ai-response hidden"></div>
                 </div>
-                <div id="meal-ai" class="ai-response hidden"></div>
-            </div>
-        </div>
 
-        <!-- WORKOUT LOGGER -->
-        <div class="card">
-            <h3>💪 Log Workout</h3>
-            <div class="card-row">
-                <div class="log-form">
-                    <input type="text" id="workout-type" placeholder="Exercise (e.g., Running)">
-                    <input type="number" id="workout-duration" placeholder="Minutes" min="0" max="1440">
+                <!-- WORKOUT LOGGER -->
+                <div class="log-card">
+                    <h4>💪 Log Workout</h4>
+                    <input type="text" id="workout-type" placeholder="Exercise">
+                    <input type="number" id="workout-duration" placeholder="Minutes" min="0">
                     <select id="workout-intensity">
                         <option value="low">Low</option>
-                        <option value="moderate">Moderate</option>
+                        <option value="medium">Medium</option>
                         <option value="high">High</option>
                     </select>
                     <button onclick="logWorkout()">Save Workout</button>
+                    <div id="workout-ai" class="ai-response hidden"></div>
                 </div>
-                <div id="workout-ai" class="ai-response hidden"></div>
-            </div>
-        </div>
 
-        <!-- SLEEP LOGGER -->
-        <div class="card">
-            <h3>😴 Log Sleep</h3>
-            <div class="card-row">
-                <div class="log-form">
+                <!-- SLEEP LOGGER -->
+                <div class="log-card">
+                    <h4>😴 Log Sleep</h4>
                     <input type="number" id="sleep-hours" placeholder="Hours slept" step="0.5" min="0" max="24">
                     <select id="sleep-quality">
                         <option value="poor">Poor</option>
@@ -56,46 +75,34 @@
                         <option value="excellent">Excellent</option>
                     </select>
                     <button onclick="logSleep()">Save Sleep</button>
+                    <div id="sleep-ai" class="ai-response hidden"></div>
                 </div>
-                <div id="sleep-ai" class="ai-response hidden"></div>
-            </div>
-        </div>
 
-        <!-- HYDRATION LOGGER -->
-        <div class="card">
-            <h3>💧 Log Hydration</h3>
-            <div class="card-row">
-                <div class="log-form">
+                <!-- HYDRATION LOGGER -->
+                <div class="log-card">
+                    <h4>💧 Log Hydration</h4>
                     <input type="number" id="water-ml" placeholder="ml consumed" min="0">
                     <button onclick="logWater()">Add Water</button>
+                    <div id="water-ai" class="ai-response hidden"></div>
                 </div>
-                <div id="water-ai" class="ai-response hidden"></div>
-            </div>
-        </div>
 
-        <!-- MOOD LOGGER -->
-        <div class="card">
-            <h3>😊 Mood Check-in</h3>
-            <div class="card-row">
-                <div class="log-form">
+                <!-- MOOD LOGGER -->
+                <div class="log-card">
+                    <h4>😊 Mood Check-in</h4>
                     <input type="range" id="mood-rating" min="1" max="10" value="5">
                     <span id="mood-value">5</span>/10
                     <input type="text" id="mood-notes" placeholder="How are you feeling?">
                     <button onclick="logMood()">Save Mood</button>
+                    <div id="mood-ai" class="ai-response hidden"></div>
                 </div>
-                <div id="mood-ai" class="ai-response hidden"></div>
             </div>
         </div>
 
         <!-- WEEKLY INSIGHT BUTTON -->
         <div class="card">
             <h3>📊 Weekly Wellness Insight</h3>
-            <div class="card-row">
-                <div class="log-form">
-                    <button onclick="getWeeklyInsight()">Get My AI Insight</button>
-                </div>
-                <div id="weekly-insight" class="ai-response hidden"></div>
-            </div>
+            <button onclick="getWeeklyInsight()">Get My AI Insight</button>
+            <div id="weekly-insight" class="ai-response hidden"></div>
         </div>
 
         <!-- CHAT ASSISTANT -->
@@ -110,7 +117,7 @@
     </div>
 
     <script>
-        // Get token from localStorage (set after login)
+        // Get token from localStorage
         const token = localStorage.getItem('token');
 
         // Check if user is logged in
@@ -129,26 +136,89 @@
             window.location.href = '/login';
         }
 
-        // ========== LOGGING FUNCTIONS (Issue #21) ==========
+        // ========== CHART INITIALIZATION (Issue #23) ==========
+        let caloriesChart, sleepChart, workoutsChart, hydrationChart, moodChart;
+
+        function initCharts() {
+            const ctx1 = document.getElementById('caloriesChart').getContext('2d');
+            const ctx2 = document.getElementById('sleepChart').getContext('2d');
+            const ctx3 = document.getElementById('workoutsChart').getContext('2d');
+            const ctx4 = document.getElementById('hydrationChart').getContext('2d');
+            const ctx5 = document.getElementById('moodChart').getContext('2d');
+
+            caloriesChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{ label: 'Calories', data: [0,0,0,0,0,0,0], borderColor: '#7e57c2', backgroundColor: 'rgba(126,87,194,0.1)', tension: 0.3 }]
+                }
+            });
+
+            sleepChart = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{ label: 'Hours Slept', data: [0,0,0,0,0,0,0], backgroundColor: '#7e57c2' }]
+                }
+            });
+
+            workoutsChart = new Chart(ctx3, {
+                type: 'bar',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{ label: 'Workout (min)', data: [0,0,0,0,0,0,0], backgroundColor: '#b39ddb' }]
+                }
+            });
+
+            hydrationChart = new Chart(ctx4, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{ label: 'Water (ml)', data: [0,0,0,0,0,0,0], borderColor: '#2196f3', backgroundColor: 'rgba(33,150,243,0.1)', tension: 0.3 }]
+                }
+            });
+
+            moodChart = new Chart(ctx5, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{ label: 'Mood (1-10)', data: [0,0,0,0,0,0,0], borderColor: '#6a1b9a', backgroundColor: 'rgba(106,27,154,0.1)', tension: 0.3 }]
+                }
+            });
+        }
+
+        // Update charts with real data
+        function updateCharts() {
+            fetch('/api/weekly-summary', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.calories) caloriesChart.data.datasets[0].data = data.calories;
+                if (data.sleep) sleepChart.data.datasets[0].data = data.sleep;
+                if (data.workouts) workoutsChart.data.datasets[0].data = data.workouts;
+                if (data.hydration) hydrationChart.data.datasets[0].data = data.hydration;
+                if (data.mood) moodChart.data.datasets[0].data = data.mood;
+                
+                caloriesChart.update();
+                sleepChart.update();
+                workoutsChart.update();
+                hydrationChart.update();
+                moodChart.update();
+            })
+            .catch(error => console.error('Error updating charts:', error));
+        }
+
+        // ========== LOGGING FUNCTIONS (with auto chart update) ==========
         
         function logMeal() {
-            const mealName = document.getElementById('meal-food').value.trim();
-            const caloriesValue = parseInt(document.getElementById('meal-cals').value, 10);
-            if (!mealName) {
-                showAI('meal-ai', '❌ Please enter a meal name.');
-                return;
-            }
-            if (!Number.isFinite(caloriesValue)) {
-                showAI('meal-ai', '❌ Please enter a valid calorie amount.');
-                return;
-            }
             const data = {
-                meal_name: mealName,
-                calories: caloriesValue,
-                meal_type: 'lunch'
+                food: document.getElementById('meal-food').value,
+                calories: parseInt(document.getElementById('meal-cals').value),
+                protein: parseInt(document.getElementById('meal-protein').value)
             };
             
-            fetch('/api/logs/meal', {
+            fetch('/api/meals', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -156,38 +226,23 @@
                 },
                 body: JSON.stringify(data)
             })
-            .then(response => response.json().then(data => ({ response, data })))
-            .then(({ response, data }) => {
-                if (response.ok) {
-                    const reactionMessage = data.reaction && data.reaction.message;
-                    showAI('meal-ai', reactionMessage || '✅ Meal logged!');
-                    clearMealForm();
-                } else {
-                    const errorFields = Array.isArray(data.fields) ? data.fields.join(' | ') : null;
-                    showAI('meal-ai', errorFields || data.message || '❌ Error logging meal');
-                }
+            .then(response => response.json())
+            .then(data => {
+                showAI('meal-ai', data.reaction || '✅ Meal logged!');
+                updateCharts(); // ✅ Auto-update charts after log
+                clearMealForm();
             })
             .catch(error => showAI('meal-ai', '❌ Error logging meal'));
         }
 
         function logWorkout() {
-            const exerciseType = document.getElementById('workout-type').value.trim();
-            const durationValue = parseInt(document.getElementById('workout-duration').value, 10);
-            if (!exerciseType) {
-                showAI('workout-ai', '❌ Please enter an exercise type.');
-                return;
-            }
-            if (!Number.isFinite(durationValue) || durationValue < 1) {
-                showAI('workout-ai', '❌ Duration must be at least 1 minute.');
-                return;
-            }
             const data = {
-                exercise_type: exerciseType,
-                duration_minutes: durationValue,
+                type: document.getElementById('workout-type').value,
+                duration: parseInt(document.getElementById('workout-duration').value),
                 intensity: document.getElementById('workout-intensity').value
             };
             
-            fetch('/api/logs/workout', {
+            fetch('/api/workouts', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -195,37 +250,22 @@
                 },
                 body: JSON.stringify(data)
             })
-            .then(response => response.json().then(data => ({ response, data })))
-            .then(({ response, data }) => {
-                if (response.ok) {
-                    const reactionMessage = data.reaction && data.reaction.message;
-                    showAI('workout-ai', reactionMessage || '💪 Workout logged!');
-                    clearWorkoutForm();
-                } else {
-                    const errorFields = Array.isArray(data.fields) ? data.fields.join(' | ') : null;
-                    showAI('workout-ai', errorFields || data.message || '❌ Error logging workout');
-                }
+            .then(response => response.json())
+            .then(data => {
+                showAI('workout-ai', data.reaction || '💪 Workout logged!');
+                updateCharts(); // ✅ Auto-update charts after log
+                clearWorkoutForm();
             })
             .catch(error => showAI('workout-ai', '❌ Error logging workout'));
         }
 
         function logSleep() {
-            const hours = parseFloat(document.getElementById('sleep-hours').value);
-            if (!Number.isFinite(hours) || hours <= 0) {
-                showAI('sleep-ai', '❌ Please enter hours slept greater than 0.');
-                return;
-            }
-            const qualityLabel = document.getElementById('sleep-quality').value;
-            const qualityMap = { poor: 1, fair: 2, good: 4, excellent: 5 };
-            const now = new Date();
-            const start = new Date(now.getTime() - (isNaN(hours) ? 0 : hours * 60 * 60 * 1000));
             const data = {
-                sleep_start: start.toISOString(),
-                sleep_end: now.toISOString(),
-                quality_score: qualityMap[qualityLabel] || 3
+                hours: parseFloat(document.getElementById('sleep-hours').value),
+                quality: document.getElementById('sleep-quality').value
             };
             
-            fetch('/api/logs/sleep', {
+            fetch('/api/sleep', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -233,31 +273,21 @@
                 },
                 body: JSON.stringify(data)
             })
-            .then(response => response.json().then(data => ({ response, data })))
-            .then(({ response, data }) => {
-                if (response.ok) {
-                    const reactionMessage = data.reaction && data.reaction.message;
-                    showAI('sleep-ai', reactionMessage || '😴 Sleep logged!');
-                    clearSleepForm();
-                } else {
-                    const errorFields = Array.isArray(data.fields) ? data.fields.join(' | ') : null;
-                    showAI('sleep-ai', errorFields || data.message || '❌ Error logging sleep');
-                }
+            .then(response => response.json())
+            .then(data => {
+                showAI('sleep-ai', data.reaction || '😴 Sleep logged!');
+                updateCharts(); // ✅ Auto-update charts after log
+                clearSleepForm();
             })
             .catch(error => showAI('sleep-ai', '❌ Error logging sleep'));
         }
 
         function logWater() {
-            const amountValue = parseInt(document.getElementById('water-ml').value, 10);
-            if (!Number.isFinite(amountValue) || amountValue < 50) {
-                showAI('water-ai', '❌ Please enter at least 50 ml.');
-                return;
-            }
             const data = {
-                amount_ml: amountValue
+                ml: parseInt(document.getElementById('water-ml').value)
             };
             
-            fetch('/api/logs/hydration', {
+            fetch('/api/hydration', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -265,29 +295,22 @@
                 },
                 body: JSON.stringify(data)
             })
-            .then(response => response.json().then(data => ({ response, data })))
-            .then(({ response, data }) => {
-                if (response.ok) {
-                    const reactionMessage = data.reaction && data.reaction.message;
-                    showAI('water-ai', reactionMessage || '💧 Water logged!');
-                    document.getElementById('water-ml').value = '';
-                } else {
-                    const errorFields = Array.isArray(data.fields) ? data.fields.join(' | ') : null;
-                    showAI('water-ai', errorFields || data.message || '❌ Error logging water');
-                }
+            .then(response => response.json())
+            .then(data => {
+                showAI('water-ai', data.reaction || '💧 Water logged!');
+                updateCharts(); // ✅ Auto-update charts after log
+                document.getElementById('water-ml').value = '';
             })
             .catch(error => showAI('water-ai', '❌ Error logging water'));
         }
 
         function logMood() {
-            const sliderValue = parseInt(document.getElementById('mood-rating').value);
-            const moodScore = Math.min(5, Math.max(1, Math.ceil(sliderValue / 2)));
             const data = {
-                mood_score: moodScore,
-                note: document.getElementById('mood-notes').value
+                rating: parseInt(document.getElementById('mood-rating').value),
+                notes: document.getElementById('mood-notes').value
             };
             
-            fetch('/api/logs/mood', {
+            fetch('/api/moods', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -295,56 +318,31 @@
                 },
                 body: JSON.stringify(data)
             })
-            .then(response => response.json().then(data => ({ response, data })))
-            .then(({ response, data }) => {
-                if (response.ok) {
-                    const reactionMessage = data.reaction && data.reaction.message;
-                    showAI('mood-ai', reactionMessage || '😊 Mood logged!');
-                    document.getElementById('mood-notes').value = '';
-                } else {
-                    const errorFields = Array.isArray(data.fields) ? data.fields.join(' | ') : null;
-                    showAI('mood-ai', errorFields || data.message || '❌ Error logging mood');
-                }
+            .then(response => response.json())
+            .then(data => {
+                showAI('mood-ai', data.reaction || '😊 Mood logged!');
+                updateCharts(); // ✅ Auto-update charts after log
+                document.getElementById('mood-notes').value = '';
             })
             .catch(error => showAI('mood-ai', '❌ Error logging mood'));
         }
 
         function getWeeklyInsight() {
-            showAI('weekly-insight', '⏳ Generating insight...');
             fetch('/api/insights/weekly', {
                 headers: { 'Authorization': 'Bearer ' + token }
             })
             .then(response => response.json())
             .then(data => {
-                if (data.error === 'insight_unavailable') {
-                    showAI('weekly-insight', 'No insights yet. Keep logging!');
-                    return;
-                }
-                const positives = Array.isArray(data.positives) ? data.positives : [];
-                const suggestions = Array.isArray(data.suggestions) ? data.suggestions : [];
-                const concern = data.concern || 'No concerns reported.';
-                const message = `Positives: ${positives.join(' • ')}\n` +
-                    `Concern: ${concern}\n` +
-                    `Suggestions: ${suggestions.join(' • ')}`;
-                showAI('weekly-insight', message);
+                showAI('weekly-insight', data.insight || 'No insights yet. Keep logging!');
             })
             .catch(error => showAI('weekly-insight', '❌ Error getting insights'));
         }
 
         function showAI(elementId, message) {
             const el = document.getElementById(elementId);
-            if (!window.__aiTimers) {
-                window.__aiTimers = {};
-            }
-            if (window.__aiTimers[elementId]) {
-                clearTimeout(window.__aiTimers[elementId]);
-            }
-
-            window.__aiTimers[elementId] = setTimeout(() => {
-                el.textContent = message;
-                el.classList.remove('hidden');
-                el.classList.add('show');
-            }, 600);
+            el.textContent = message;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 5000);
         }
 
         function appendChatMessage(role, message) {
@@ -423,6 +421,10 @@
             document.getElementById('sleep-hours').value = '';
             document.getElementById('sleep-quality').value = 'poor';
         }
+
+        // Initialize charts when page loads
+        initCharts();
+        updateCharts();
     </script>
 </body>
 </html>
