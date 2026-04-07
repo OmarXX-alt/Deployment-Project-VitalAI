@@ -175,6 +175,22 @@ button:hover {
     box-shadow: 0 8px 32px rgba(0,0,0,0.2);
 }
 
+.card-row {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.log-form {
+    flex: 1 1 55%;
+}
+
+.ai-response {
+    flex: 1 1 45%;
+    min-height: 72px;
+    white-space: pre-line;
+}
+
 .card h3 {
     color: #6a1b9a;
     margin-top: 0;
@@ -197,6 +213,15 @@ button:hover {
 
 .hidden {
     display: none;
+}
+
+@media (max-width: 720px) {
+    .card-row {
+        flex-direction: column;
+    }
+    .ai-response {
+        width: 100%;
+    }
 }
 
 /* ========== LANDING PAGE STYLES (index.html) ========== */

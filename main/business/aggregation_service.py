@@ -14,9 +14,19 @@ def _utc_today_bounds() -> tuple[datetime, datetime]:
     return start_of_today, now
 
 
-def _date_str(dt: datetime) -> str:
+def _date_str(dt: datetime | str) -> str:
     """Return YYYY-MM-DD string for a UTC datetime."""
-    return dt.strftime("%Y-%m-%d")
+    if isinstance(dt, datetime):
+        return dt.strftime("%Y-%m-%d")
+    if isinstance(dt, str):
+        try:
+            parsed = datetime.fromisoformat(dt)
+        except ValueError:
+            return dt[:10] if len(dt) >= 10 else dt
+        if parsed.tzinfo is None or parsed.tzinfo.utcoffset(parsed) is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.strftime("%Y-%m-%d")
+    return ""
 
 
 def _fill_7_day_series(
@@ -47,6 +57,41 @@ def _serialize_value(value: object) -> object:
 
 def _serialize_doc(doc: dict) -> dict:
     return {key: _serialize_value(value) for key, value in doc.items()}
+
+
+def _secure_match(user_id: str) -> dict:
+    """Return a scoped query filter for an authenticated user."""
+    return {"user_id": str(user_id)}
+
+
+def _window_dates(now: datetime, days: int) -> list[str]:
+    today = now.date()
+    return [
+        (today - timedelta(days=offset)).isoformat()
+        for offset in range(days - 1, -1, -1)
+    ]
+
+
+def _series_from_dict(
+    dates: list[str], data: dict[str, float], key: str, default: float
+) -> list[dict]:
+    return [{"date": date, key: data.get(date, default)} for date in dates]
+
+
+def _coerce_datetime(value: object) -> datetime | None:
+    if isinstance(value, datetime):
+        if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value
+    if isinstance(value, str):
+        try:
+            parsed = datetime.fromisoformat(value)
+        except ValueError:
+            return None
+        if parsed.tzinfo is None or parsed.tzinfo.utcoffset(parsed) is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed
+    return None
 
 
 def _normalize_log_types(log_type, log_types) -> set[str]:
@@ -109,31 +154,54 @@ def build_context(
     log_types=None,
     days: int = 7,
 ) -> dict:
-    """Build the canonical context schema for AI prompts and analytics.
+    """Build a 7-day reactive context summary for AI prompts.
 
     Purpose:
-        Aggregate recent logs and profile data into a standardized context.
+        Aggregate recent logs and profile data into a compact, flat summary.
     Expected Input types:
         user_id (str), log_type (Optional[str]),
         log_types (Optional[list[str]]), days (int).
     Expected Output:
-        dict containing the canonical context schema.
-
-    # TODO: [Logic-Issue-010]
-    Implementation checklist:
-        1. load logs by type
-        2. compute daily totals and trends
-        3. load profile targets
-        4. return canonical context schema
-
-    This is the agreed output schema. Member 2 builds prompts against this
-    shape. Any change must be communicated via a GitHub issue comment before
-    implementation.
+        dict containing the reactive context summary.
     """
     requested = _normalize_log_types(log_type, log_types)
     now = datetime.now(timezone.utc)
-    cutoff = datetime.utcnow() - timedelta(days=days)
-    context: dict = {}
+    cutoff = now - timedelta(hours=days * 24)
+    date_keys = _window_dates(now, days)
+
+    context: dict = {
+        "window_days": days,
+        "window_start_utc": cutoff.isoformat(),
+        "window_end_utc": now.isoformat(),
+        "daily_calorie_target": None,
+        "hydration_goal_ml": None,
+        "wellness_goal": None,
+        "meal_daily_kcal": _series_from_dict(
+            date_keys, {}, "kcal", 0
+        ),
+        "meal_avg_kcal": 0.0,
+        "meal_days_logged": 0,
+        "sleep_daily_hours": _series_from_dict(
+            date_keys, {}, "hours", 0.0
+        ),
+        "sleep_avg_duration_hours": 0.0,
+        "sleep_avg_quality_score": 0.0,
+        "hydration_daily_ml": _series_from_dict(
+            date_keys, {}, "ml", 0.0
+        ),
+        "hydration_today_ml": 0.0,
+        "hydration_pct_of_goal": None,
+        "workout_daily_count": _series_from_dict(
+            date_keys, {}, "count", 0
+        ),
+        "workout_sessions": 0,
+        "workout_avg_intensity": None,
+        "workout_avg_intensity_label": None,
+        "mood_daily_score": _series_from_dict(
+            date_keys, {}, "score", None
+        ),
+        "mood_avg_score": None,
+    }
 
     try:
         user = mongo.users.find_one(
@@ -141,49 +209,28 @@ def build_context(
             {
                 "daily_calorie_target": 1,
                 "hydration_goal": 1,
+                "hydration_goal_ml": 1,
                 "wellness_goal": 1,
             },
         )
     except Exception:
         user = None
 
-    context["profile"] = {
-        "daily_calorie_target": (
-            user.get("daily_calorie_target") if user else None
-        ),
-        "hydration_goal": user.get("hydration_goal") if user else None,
-        "wellness_goal": user.get("wellness_goal") if user else None,
-    }
-
-    if "workouts" in requested:
-        cursor = mongo.workout_logs.find(
-            {"user_id": user_id, "logged_at": {"$gte": cutoff}},
-            sort=[("logged_at", 1)],
-        )
-        entries = []
-        by_day: dict[str, dict] = {}
-
-        for doc in cursor:
-            entries.append(_serialize_doc(doc))
-            logged_at = doc.get("logged_at")
-            if isinstance(logged_at, datetime):
-                d = _date_str(logged_at)
-            else:
-                d = None
-            if not d:
-                continue
-            if d not in by_day:
-                by_day[d] = {"count": 0, "total_minutes": 0, "intensities": []}
-            by_day[d]["count"] += 1
-            by_day[d]["total_minutes"] += doc.get("duration_minutes", 0)
-            by_day[d]["intensities"].append(doc.get("intensity", ""))
-        by_day = _fill_workout_days(by_day, days)
-
-        context["workouts"] = {"entries": entries, "by_day": by_day}
+    if user:
+        context["daily_calorie_target"] = user.get("daily_calorie_target")
+        context["hydration_goal_ml"] = user.get("hydration_goal")
+        if context["hydration_goal_ml"] is None:
+            context["hydration_goal_ml"] = user.get("hydration_goal_ml")
+        context["wellness_goal"] = user.get("wellness_goal")
 
     if "meals" in requested:
         pipeline = [
-            {"$match": {"user_id": user_id, "logged_at": {"$gte": cutoff}}},
+            {
+                "$match": {
+                    **_secure_match(user_id),
+                    "logged_at": {"$gte": cutoff},
+                }
+            },
             {
                 "$group": {
                     "_id": {
@@ -194,78 +241,76 @@ def build_context(
                         }
                     },
                     "total_kcal": {"$sum": "$calories"},
-                    "entries": {"$push": "$$ROOT"},
                 }
             },
             {"$sort": {"_id": 1}},
         ]
         results = list(mongo.meal_logs.aggregate(pipeline))
-
-        daily_totals: dict[str, int] = {}
-        all_entries = []
-        for result in results:
-            date_key = result.get("_id")
-            daily_totals[date_key] = int(result.get("total_kcal", 0))
-            for entry in result.get("entries", []):
-                all_entries.append(_serialize_doc(entry))
-
-        daily_totals = _fill_days(daily_totals, 0, days)
-        today_str = _date_str(now)
-        today_total_kcal = daily_totals.get(today_str, 0)
-
-        context["meals"] = {
-            "entries": all_entries,
-            "daily_totals": daily_totals,
-            "today_total_kcal": today_total_kcal,
+        daily_totals: dict[str, float] = {
+            result.get("_id"): float(result.get("total_kcal", 0))
+            for result in results
+            if result.get("_id")
         }
+        context["meal_daily_kcal"] = _series_from_dict(
+            date_keys, daily_totals, "kcal", 0.0
+        )
+        kcal_values = [point["kcal"] for point in context["meal_daily_kcal"]]
+        context["meal_avg_kcal"] = (
+            sum(kcal_values) / len(kcal_values) if kcal_values else 0.0
+        )
+        context["meal_days_logged"] = sum(
+            1 for point in context["meal_daily_kcal"] if point["kcal"] > 0
+        )
 
     if "sleep" in requested:
         cursor = mongo.sleep_logs.find(
-            {"user_id": user_id, "logged_at": {"$gte": cutoff}},
+            {**_secure_match(user_id), "logged_at": {"$gte": cutoff}},
             sort=[("logged_at", 1)],
         )
-        entries = []
+        durations: list[float] = []
+        qualities: list[float] = []
+        by_day: dict[str, float] = {}
         for doc in cursor:
-            entries.append(_serialize_doc(doc))
-
-        durations = [e.get("duration_minutes", 0) for e in entries]
-        qualities = [e.get("quality_score", 0) for e in entries]
-        avg_duration = sum(durations) / len(durations) if durations else 0.0
-        avg_quality = sum(qualities) / len(qualities) if qualities else 0.0
-
-        if len(entries) < 4:
-            trend = "insufficient_data"
-        else:
-            mid = len(entries) // 2
-            older = entries[:mid]
-            newer = entries[mid:]
-            older_avg = (
-                sum(e.get("quality_score", 0) for e in older) / len(older)
-                if older
-                else 0.0
-            )
-            newer_avg = (
-                sum(e.get("quality_score", 0) for e in newer) / len(newer)
-                if newer
-                else 0.0
-            )
-            if newer_avg > older_avg + 0.3:
-                trend = "improving"
-            elif newer_avg < older_avg - 0.3:
-                trend = "declining"
-            else:
-                trend = "stable"
-
-        context["sleep"] = {
-            "entries": entries,
-            "avg_duration": round(avg_duration, 1),
-            "avg_quality": round(avg_quality, 2),
-            "trend": trend,
-        }
+            sleep_start = _coerce_datetime(doc.get("sleep_start"))
+            sleep_end = _coerce_datetime(doc.get("sleep_end"))
+            duration_minutes = doc.get("duration_minutes")
+            duration_hours = None
+            if sleep_start and sleep_end:
+                duration_hours = (
+                    sleep_end - sleep_start
+                ).total_seconds() / 3600
+            elif isinstance(duration_minutes, (int, float)):
+                duration_hours = float(duration_minutes) / 60.0
+            if isinstance(duration_hours, (int, float)):
+                durations.append(float(duration_hours))
+                day_key = _date_str(
+                    doc.get("logged_at") or sleep_start or sleep_end
+                )
+                if day_key:
+                    by_day[day_key] = by_day.get(day_key, 0.0) + float(
+                        duration_hours
+                    )
+            quality = doc.get("quality_score", doc.get("quality"))
+            if isinstance(quality, (int, float)):
+                qualities.append(float(quality))
+        context["sleep_daily_hours"] = _series_from_dict(
+            date_keys, by_day, "hours", 0.0
+        )
+        context["sleep_avg_duration_hours"] = (
+            sum(durations) / len(durations) if durations else 0.0
+        )
+        context["sleep_avg_quality_score"] = (
+            sum(qualities) / len(qualities) if qualities else 0.0
+        )
 
     if "hydration" in requested:
         pipeline = [
-            {"$match": {"user_id": user_id, "logged_at": {"$gte": cutoff}}},
+            {
+                "$match": {
+                    **_secure_match(user_id),
+                    "logged_at": {"$gte": cutoff},
+                }
+            },
             {
                 "$group": {
                     "_id": {
@@ -276,71 +321,88 @@ def build_context(
                         }
                     },
                     "total_ml": {"$sum": "$amount_ml"},
-                    "entries": {"$push": "$$ROOT"},
                 }
             },
             {"$sort": {"_id": 1}},
         ]
         results = list(mongo.hydration_logs.aggregate(pipeline))
-
-        daily_totals: dict[str, int] = {}
-        all_entries = []
-        for result in results:
-            date_key = result.get("_id")
-            daily_totals[date_key] = int(result.get("total_ml", 0))
-            for entry in result.get("entries", []):
-                all_entries.append(_serialize_doc(entry))
-
-        daily_totals = _fill_days(daily_totals, 0, days)
-        today_str = _date_str(now)
-        today_total_ml = daily_totals.get(today_str, 0)
-
-        context["hydration"] = {
-            "entries": all_entries,
-            "daily_totals": daily_totals,
-            "today_total_ml": today_total_ml,
+        daily_totals = {
+            result.get("_id"): float(result.get("total_ml", 0))
+            for result in results
+            if result.get("_id")
         }
+        context["hydration_daily_ml"] = _series_from_dict(
+            date_keys, daily_totals, "ml", 0.0
+        )
+        today_key = date_keys[-1] if date_keys else _date_str(now)
+        context["hydration_today_ml"] = float(daily_totals.get(today_key, 0))
+        goal = context.get("hydration_goal_ml")
+        if isinstance(goal, (int, float)) and goal > 0:
+            context["hydration_pct_of_goal"] = round(
+                (context["hydration_today_ml"] / goal) * 100, 1
+            )
+
+    if "workouts" in requested:
+        cursor = mongo.workout_logs.find(
+            {**_secure_match(user_id), "logged_at": {"$gte": cutoff}},
+            sort=[("logged_at", 1)],
+        )
+        by_day: dict[str, float] = {}
+        intensity_values: list[float] = []
+        intensity_map = {"low": 1.0, "moderate": 2.0, "high": 3.0}
+        for doc in cursor:
+            context["workout_sessions"] += 1
+            logged_at = doc.get("logged_at")
+            day_key = _date_str(logged_at) if logged_at else None
+            if day_key:
+                by_day[day_key] = by_day.get(day_key, 0) + 1
+            intensity = doc.get("intensity")
+            if isinstance(intensity, str):
+                intensity_value = intensity_map.get(intensity.strip().lower())
+                if intensity_value:
+                    intensity_values.append(intensity_value)
+        context["workout_daily_count"] = _series_from_dict(
+            date_keys, by_day, "count", 0
+        )
+        if intensity_values:
+            avg_intensity = sum(intensity_values) / len(intensity_values)
+            context["workout_avg_intensity"] = round(avg_intensity, 2)
+            if avg_intensity < 1.5:
+                context["workout_avg_intensity_label"] = "low"
+            elif avg_intensity < 2.5:
+                context["workout_avg_intensity_label"] = "moderate"
+            else:
+                context["workout_avg_intensity_label"] = "high"
 
     if "mood" in requested:
         cursor = mongo.mood_logs.find(
-            {"user_id": user_id, "logged_at": {"$gte": cutoff}},
+            {**_secure_match(user_id), "logged_at": {"$gte": cutoff}},
             sort=[("logged_at", 1)],
         )
-        entries = []
+        scores: list[float] = []
+        by_day: dict[str, list[float]] = {}
         for doc in cursor:
-            entries.append(_serialize_doc(doc))
-
-        scores = [e.get("mood_score", 0) for e in entries]
-        avg_score = sum(scores) / len(scores) if scores else 0.0
-
-        if len(entries) < 4:
-            trend = "insufficient_data"
-        else:
-            mid = len(entries) // 2
-            older = entries[:mid]
-            newer = entries[mid:]
-            older_avg = (
-                sum(e.get("mood_score", 0) for e in older) / len(older)
-                if older
-                else 0.0
-            )
-            newer_avg = (
-                sum(e.get("mood_score", 0) for e in newer) / len(newer)
-                if newer
-                else 0.0
-            )
-            if newer_avg > older_avg + 0.3:
-                trend = "improving"
-            elif newer_avg < older_avg - 0.3:
-                trend = "declining"
-            else:
-                trend = "stable"
-
-        context["mood"] = {
-            "entries": entries,
-            "avg_score": round(avg_score, 2),
-            "trend": trend,
-        }
+            score = doc.get("mood_score", doc.get("mood_rating"))
+            if isinstance(score, (int, float)):
+                scores.append(float(score))
+            date_value = doc.get("date")
+            day_key = None
+            if isinstance(date_value, str):
+                day_key = date_value[:10]
+            if not day_key:
+                logged_at = doc.get("logged_at")
+                day_key = _date_str(logged_at) if logged_at else None
+            if day_key and isinstance(score, (int, float)):
+                by_day.setdefault(day_key, []).append(float(score))
+        mood_daily: dict[str, float] = {}
+        for day, values in by_day.items():
+            mood_daily[day] = sum(values) / len(values) if values else 0.0
+        context["mood_daily_score"] = _series_from_dict(
+            date_keys, mood_daily, "score", None
+        )
+        context["mood_avg_score"] = (
+            sum(scores) / len(scores) if scores else None
+        )
 
     return context
 
@@ -359,30 +421,20 @@ def get_dashboard_data(user_id: str) -> dict:
     """
     context = build_context(user_id, log_types=None, days=7)
 
-    daily_sleep: dict[str, float] = {}
-    for entry in context["sleep"]["entries"]:
-        d = _date_str(entry["logged_at"])
-        daily_sleep[d] = daily_sleep.get(d, 0.0) + (
-            entry.get("duration_minutes", 0) / 60
-        )
-    sleep_duration_7d = _fill_7_day_series(daily_sleep, "hours", 0.0)
+    sleep_duration_7d = context["sleep_daily_hours"]
     for point in sleep_duration_7d:
-        point["hours"] = round(point["hours"], 1)
+        if isinstance(point.get("hours"), (int, float)):
+            point["hours"] = round(point["hours"], 1)
 
-    calorie_target = context["profile"]["daily_calorie_target"]
-    raw_kcal = context["meals"]["daily_totals"]
-    calories_7d = _fill_7_day_series(raw_kcal, "kcal", 0)
+    calorie_target = context["daily_calorie_target"]
+    calories_7d = context["meal_daily_kcal"]
     for point in calories_7d:
         point["target"] = calorie_target
 
-    raw_counts = {
-        d: info["count"] for d, info in context["workouts"]["by_day"].items()
-    }
-    workout_count_7d = _fill_7_day_series(raw_counts, "count", 0)
+    workout_count_7d = context["workout_daily_count"]
 
-    hydration_goal = context["profile"]["hydration_goal"]
-    raw_ml = context["hydration"]["daily_totals"]
-    hydration_7d = _fill_7_day_series(raw_ml, "ml", 0)
+    hydration_goal = context["hydration_goal_ml"]
+    hydration_7d = context["hydration_daily_ml"]
     for point in hydration_7d:
         point["goal"] = hydration_goal
         if hydration_goal and hydration_goal > 0:
@@ -392,17 +444,9 @@ def get_dashboard_data(user_id: str) -> dict:
         else:
             point["pct_of_goal"] = None
 
-    raw_mood: dict[str, float] = {}
-    for entry in context["mood"]["entries"]:
-        d = entry.get("date") or _date_str(entry["logged_at"])
-        raw_mood[d] = entry.get("mood_score", 0)
-    mood_7d = _fill_7_day_series(raw_mood, "score", None)
+    mood_7d = context["mood_daily_score"]
 
-    today_ml = context["hydration"]["today_total_ml"]
-    if hydration_goal and hydration_goal > 0:
-        today_hydration_pct = round((today_ml / hydration_goal) * 100, 1)
-    else:
-        today_hydration_pct = None
+    today_hydration_pct = context.get("hydration_pct_of_goal")
 
     return {
         "sleep_duration_7d": sleep_duration_7d,
