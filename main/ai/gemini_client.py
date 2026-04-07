@@ -13,7 +13,7 @@ SYSTEM_INSTRUCTION = (
 )
 
 
-def call_gemini(prompt: str, timeout: int = 3) -> str | None:
+def call_gemini(prompt: str, timeout: int = 60) -> str | None:
     """Send a single prompt to Gemini 2.5 Flash."""
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:

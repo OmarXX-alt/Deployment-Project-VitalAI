@@ -69,7 +69,7 @@ def weekly_insights():
             json.dumps(mood_ctx),
         ]
         prompt = "\n".join(prompt_lines)
-        response_text = call_gemini(prompt, timeout=8)
+        response_text = call_gemini(prompt, timeout=60)
         if not response_text:
             return jsonify(fallback), 200
         payload = json.loads(response_text)
