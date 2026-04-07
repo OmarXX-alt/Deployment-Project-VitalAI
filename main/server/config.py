@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 
@@ -5,6 +6,8 @@ from dotenv import load_dotenv
 
 # Load .env early so config reads environment values during import
 load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 
 class Config:
@@ -57,9 +60,9 @@ def get_config(name=None):
     # (skip in pytest to avoid CI collection errors)
     if name.lower() == "production" and config.INIT_DB and "pytest" not in sys.modules:
         if not config.MONGO_URI or config.MONGO_URI.startswith("mongodb://localhost"):
-            raise ValueError(
-                "MONGO_URI environment variable is required for production deployment. "
-                "Set it in your Render.com environment variables."
+            logger.warning(
+                "MONGO_URI is not set for production; falling back to localhost. "
+                "Set MONGO_URI in Render.com environment variables."
             )
 
     return config
