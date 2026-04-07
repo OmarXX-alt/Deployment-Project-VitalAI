@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from flask import Blueprint, current_app, g, jsonify, request
 
+from main.ai.gemini_client import build_meal_prompt, call_gemini
 from main.business import log_service
+from main.business.utils.aggregation import get_meal_context
+from main.persistence.db import get_db
 from main.persistence.schemas import (
     HydrationLogSchema,
     MealLogSchema,
@@ -91,6 +94,26 @@ def log_meal():
         validated["meal_type"],
         validated.get("logged_at"),
     )
+    reaction_message = None
+    try:
+        db = get_db()
+        context = get_meal_context(g.user_id, db)
+        new_entry = {
+            "meal_name": response_body.get("meal_name"),
+            "calories": response_body.get("calories"),
+            "meal_type": response_body.get("meal_type"),
+            "today_total_kcal": response_body.get("today_total_kcal"),
+        }
+        prompt = build_meal_prompt(new_entry, context)
+        reaction_message = call_gemini(prompt)
+    except Exception as exc:
+        current_app.logger.warning("meal AI reaction failed: %s", exc)
+
+    response_body["reaction"] = {
+        "type": "meal",
+        "message": reaction_message,
+        "tags": [],
+    }
     return jsonify(response_body), status
 
 
