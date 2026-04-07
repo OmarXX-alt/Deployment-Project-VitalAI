@@ -49,6 +49,7 @@ def create_app(config_name=None):
 
     # Blueprint imports deferred to avoid circular dependency
     from main.application.auth import auth_bp
+    from main.application.chat import chat_bp
     from main.application.dashboard import dashboard_bp
     from main.application.logs import logs_bp
     from main.application.profile import profile_bp
@@ -61,6 +62,7 @@ def create_app(config_name=None):
     app.register_blueprint(auth_bp)
     app.register_blueprint(profile_bp)
     app.register_blueprint(logs_bp)
+    app.register_blueprint(chat_bp)
 
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(health_bp)

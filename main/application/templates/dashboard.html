@@ -97,6 +97,16 @@
                 <div id="weekly-insight" class="ai-response hidden"></div>
             </div>
         </div>
+
+        <!-- CHAT ASSISTANT -->
+        <div class="card chat-card">
+            <h3>🤖 VitalAI Chat</h3>
+            <div class="chat-thread" id="chat-thread"></div>
+            <div class="chat-input-row">
+                <input type="text" id="chat-input" placeholder="Ask about your week...">
+                <button class="chat-send" onclick="sendChat()">Send</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -336,6 +346,65 @@
                 el.classList.add('show');
             }, 600);
         }
+
+        function appendChatMessage(role, message) {
+            const thread = document.getElementById('chat-thread');
+            const bubble = document.createElement('div');
+            const roleClass = role === 'user' ? 'chat-user' : 'chat-assistant';
+            bubble.className = `chat-message ${roleClass}`;
+            bubble.textContent = message;
+            thread.appendChild(bubble);
+            thread.scrollTop = thread.scrollHeight;
+            return bubble;
+        }
+
+        function sendChat() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message) {
+                return;
+            }
+
+            appendChatMessage('user', message);
+            const pending = appendChatMessage('assistant', 'Thinking...');
+            pending.classList.add('chat-pending');
+            input.value = '';
+
+            const payload = { message };
+            const sessionId = localStorage.getItem('chat_session_id');
+            if (sessionId) {
+                payload.session_id = sessionId;
+            }
+
+            fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json().then(data => ({ response, data })))
+            .then(({ data }) => {
+                const reply = data.reply || "I'm having trouble connecting right now. Please try again.";
+                pending.textContent = reply;
+                pending.classList.remove('chat-pending');
+                if (data.session_id) {
+                    localStorage.setItem('chat_session_id', data.session_id);
+                }
+            })
+            .catch(() => {
+                pending.textContent = "I'm having trouble connecting right now. Please try again.";
+                pending.classList.remove('chat-pending');
+            });
+        }
+
+        document.getElementById('chat-input').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                sendChat();
+            }
+        });
 
         // Helper functions to clear forms
         function clearMealForm() {
