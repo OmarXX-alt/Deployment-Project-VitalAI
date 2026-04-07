@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | VitalAI</title>
-    <link rel="stylesheet" href="/main/application/static/styles.css">
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
     <div class="container">
@@ -32,7 +32,7 @@
             </form>
             
             <div class="link">
-                Don't have an account? <a href="/main/application/templates/register.html">Sign up for free</a>
+                Don't have an account? <a href="/register">Sign up for free</a>
             </div>
         </div>
     </div>
@@ -67,8 +67,8 @@
                 },
                 body: JSON.stringify({ email, password })
             })
-            .then(response => response.json())
-            .then(data => {
+            .then(response => response.json().then(data => ({ response, data })))
+            .then(({ response, data }) => {
                 if (data.token) {
                     // Store token in localStorage
                     localStorage.setItem('token', data.token);
@@ -81,8 +81,9 @@
                         window.location.href = '/dashboard';
                     }, 1000);
                 } else {
-                    // Show error from backend
-                    document.getElementById('error-message').textContent = data.message || 'Login failed. Please try again.';
+                    const errorFields = Array.isArray(data.fields) ? data.fields.join(' | ') : null;
+                    const fallback = response.ok ? 'Login failed. Please try again.' : 'Login failed. Please check your input.';
+                    document.getElementById('error-message').textContent = errorFields || data.message || fallback;
                     document.getElementById('error-message').style.display = 'block';
                     document.getElementById('success-message').style.display = 'none';
                 }

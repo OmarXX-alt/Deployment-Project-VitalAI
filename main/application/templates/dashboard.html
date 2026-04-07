@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>VitalAI - Dashboard</title>
-    <link rel="stylesheet" href="/main/application/static/styles.css">
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
     <div class="dashboard-container">
@@ -28,7 +28,7 @@
             <input type="number" id="workout-duration" placeholder="Minutes" min="0" max="1440">
             <select id="workout-intensity">
                 <option value="low">Low</option>
-                <option value="medium">Medium</option>
+                <option value="moderate">Moderate</option>
                 <option value="high">High</option>
             </select>
             <button onclick="logWorkout()">Save Workout</button>
@@ -98,13 +98,23 @@
         // ========== LOGGING FUNCTIONS (Issue #21) ==========
         
         function logMeal() {
+            const mealName = document.getElementById('meal-food').value.trim();
+            const caloriesValue = parseInt(document.getElementById('meal-cals').value, 10);
+            if (!mealName) {
+                showAI('meal-ai', '❌ Please enter a meal name.');
+                return;
+            }
+            if (!Number.isFinite(caloriesValue)) {
+                showAI('meal-ai', '❌ Please enter a valid calorie amount.');
+                return;
+            }
             const data = {
-                food: document.getElementById('meal-food').value,
-                calories: parseInt(document.getElementById('meal-cals').value),
-                protein: parseInt(document.getElementById('meal-protein').value)
+                meal_name: mealName,
+                calories: caloriesValue,
+                meal_type: 'lunch'
             };
             
-            fetch('/api/meals', {
+            fetch('/api/logs/meal', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -112,22 +122,37 @@
                 },
                 body: JSON.stringify(data)
             })
-            .then(response => response.json())
-            .then(data => {
-                showAI('meal-ai', data.reaction || '✅ Meal logged!');
-                clearMealForm();
+            .then(response => response.json().then(data => ({ response, data })))
+            .then(({ response, data }) => {
+                if (response.ok) {
+                    showAI('meal-ai', data.reaction || '✅ Meal logged!');
+                    clearMealForm();
+                } else {
+                    const errorFields = Array.isArray(data.fields) ? data.fields.join(' | ') : null;
+                    showAI('meal-ai', errorFields || data.message || '❌ Error logging meal');
+                }
             })
             .catch(error => showAI('meal-ai', '❌ Error logging meal'));
         }
 
         function logWorkout() {
+            const exerciseType = document.getElementById('workout-type').value.trim();
+            const durationValue = parseInt(document.getElementById('workout-duration').value, 10);
+            if (!exerciseType) {
+                showAI('workout-ai', '❌ Please enter an exercise type.');
+                return;
+            }
+            if (!Number.isFinite(durationValue) || durationValue < 1) {
+                showAI('workout-ai', '❌ Duration must be at least 1 minute.');
+                return;
+            }
             const data = {
-                type: document.getElementById('workout-type').value,
-                duration: parseInt(document.getElementById('workout-duration').value),
+                exercise_type: exerciseType,
+                duration_minutes: durationValue,
                 intensity: document.getElementById('workout-intensity').value
             };
             
-            fetch('/api/workouts', {
+            fetch('/api/logs/workout', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -135,21 +160,36 @@
                 },
                 body: JSON.stringify(data)
             })
-            .then(response => response.json())
-            .then(data => {
-                showAI('workout-ai', data.reaction || '💪 Workout logged!');
-                clearWorkoutForm();
+            .then(response => response.json().then(data => ({ response, data })))
+            .then(({ response, data }) => {
+                if (response.ok) {
+                    showAI('workout-ai', data.reaction || '💪 Workout logged!');
+                    clearWorkoutForm();
+                } else {
+                    const errorFields = Array.isArray(data.fields) ? data.fields.join(' | ') : null;
+                    showAI('workout-ai', errorFields || data.message || '❌ Error logging workout');
+                }
             })
             .catch(error => showAI('workout-ai', '❌ Error logging workout'));
         }
 
         function logSleep() {
+            const hours = parseFloat(document.getElementById('sleep-hours').value);
+            if (!Number.isFinite(hours) || hours <= 0) {
+                showAI('sleep-ai', '❌ Please enter hours slept greater than 0.');
+                return;
+            }
+            const qualityLabel = document.getElementById('sleep-quality').value;
+            const qualityMap = { poor: 1, fair: 2, good: 4, excellent: 5 };
+            const now = new Date();
+            const start = new Date(now.getTime() - (isNaN(hours) ? 0 : hours * 60 * 60 * 1000));
             const data = {
-                hours: parseFloat(document.getElementById('sleep-hours').value),
-                quality: document.getElementById('sleep-quality').value
+                sleep_start: start.toISOString(),
+                sleep_end: now.toISOString(),
+                quality_score: qualityMap[qualityLabel] || 3
             };
             
-            fetch('/api/sleep', {
+            fetch('/api/logs/sleep', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -157,20 +197,30 @@
                 },
                 body: JSON.stringify(data)
             })
-            .then(response => response.json())
-            .then(data => {
-                showAI('sleep-ai', data.reaction || '😴 Sleep logged!');
-                clearSleepForm();
+            .then(response => response.json().then(data => ({ response, data })))
+            .then(({ response, data }) => {
+                if (response.ok) {
+                    showAI('sleep-ai', data.reaction || '😴 Sleep logged!');
+                    clearSleepForm();
+                } else {
+                    const errorFields = Array.isArray(data.fields) ? data.fields.join(' | ') : null;
+                    showAI('sleep-ai', errorFields || data.message || '❌ Error logging sleep');
+                }
             })
             .catch(error => showAI('sleep-ai', '❌ Error logging sleep'));
         }
 
         function logWater() {
+            const amountValue = parseInt(document.getElementById('water-ml').value, 10);
+            if (!Number.isFinite(amountValue) || amountValue < 50) {
+                showAI('water-ai', '❌ Please enter at least 50 ml.');
+                return;
+            }
             const data = {
-                ml: parseInt(document.getElementById('water-ml').value)
+                amount_ml: amountValue
             };
             
-            fetch('/api/hydration', {
+            fetch('/api/logs/hydration', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -178,21 +228,28 @@
                 },
                 body: JSON.stringify(data)
             })
-            .then(response => response.json())
-            .then(data => {
-                showAI('water-ai', data.reaction || '💧 Water logged!');
-                document.getElementById('water-ml').value = '';
+            .then(response => response.json().then(data => ({ response, data })))
+            .then(({ response, data }) => {
+                if (response.ok) {
+                    showAI('water-ai', data.reaction || '💧 Water logged!');
+                    document.getElementById('water-ml').value = '';
+                } else {
+                    const errorFields = Array.isArray(data.fields) ? data.fields.join(' | ') : null;
+                    showAI('water-ai', errorFields || data.message || '❌ Error logging water');
+                }
             })
             .catch(error => showAI('water-ai', '❌ Error logging water'));
         }
 
         function logMood() {
+            const sliderValue = parseInt(document.getElementById('mood-rating').value);
+            const moodScore = Math.min(5, Math.max(1, Math.ceil(sliderValue / 2)));
             const data = {
-                rating: parseInt(document.getElementById('mood-rating').value),
-                notes: document.getElementById('mood-notes').value
+                mood_score: moodScore,
+                note: document.getElementById('mood-notes').value
             };
             
-            fetch('/api/moods', {
+            fetch('/api/logs/mood', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -200,10 +257,15 @@
                 },
                 body: JSON.stringify(data)
             })
-            .then(response => response.json())
-            .then(data => {
-                showAI('mood-ai', data.reaction || '😊 Mood logged!');
-                document.getElementById('mood-notes').value = '';
+            .then(response => response.json().then(data => ({ response, data })))
+            .then(({ response, data }) => {
+                if (response.ok) {
+                    showAI('mood-ai', data.reaction || '😊 Mood logged!');
+                    document.getElementById('mood-notes').value = '';
+                } else {
+                    const errorFields = Array.isArray(data.fields) ? data.fields.join(' | ') : null;
+                    showAI('mood-ai', errorFields || data.message || '❌ Error logging mood');
+                }
             })
             .catch(error => showAI('mood-ai', '❌ Error logging mood'));
         }
