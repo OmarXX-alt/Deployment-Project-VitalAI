@@ -323,8 +323,18 @@
 
         function showAI(elementId, message) {
             const el = document.getElementById(elementId);
-            el.textContent = message;
-            el.classList.remove('hidden');
+            if (!window.__aiTimers) {
+                window.__aiTimers = {};
+            }
+            if (window.__aiTimers[elementId]) {
+                clearTimeout(window.__aiTimers[elementId]);
+            }
+
+            window.__aiTimers[elementId] = setTimeout(() => {
+                el.textContent = message;
+                el.classList.remove('hidden');
+                el.classList.add('show');
+            }, 600);
         }
 
         // Helper functions to clear forms
