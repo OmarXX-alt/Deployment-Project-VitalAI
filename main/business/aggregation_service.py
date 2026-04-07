@@ -31,13 +31,91 @@ def _fill_7_day_series(
     return series
 
 
-def build_context(user_id: str, log_types=None, days: int = 7) -> dict:
+def _serialize_value(value: object) -> object:
+    if isinstance(value, ObjectId):
+        return str(value)
+    if isinstance(value, datetime):
+        if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
+            value = value.replace(tzinfo=timezone.utc)
+        return value.isoformat()
+    if isinstance(value, list):
+        return [_serialize_value(item) for item in value]
+    if isinstance(value, dict):
+        return {key: _serialize_value(item) for key, item in value.items()}
+    return value
+
+
+def _serialize_doc(doc: dict) -> dict:
+    return {key: _serialize_value(value) for key, value in doc.items()}
+
+
+def _normalize_log_types(log_type, log_types) -> set[str]:
+    all_types = {"workouts", "meals", "sleep", "hydration", "mood"}
+    if log_types is None and log_type:
+        log_types = [log_type]
+    if log_types is None:
+        return set(all_types)
+    normalized: set[str] = set()
+    mapping = {
+        "workout": "workouts",
+        "meal": "meals",
+        "sleep": "sleep",
+        "hydration": "hydration",
+        "mood": "mood",
+        "workouts": "workouts",
+        "meals": "meals",
+    }
+    for entry in log_types:
+        if not isinstance(entry, str):
+            continue
+        key = mapping.get(entry.strip().lower())
+        if key:
+            normalized.add(key)
+    return normalized or set(all_types)
+
+
+def _fill_days(
+    data: dict[str, object], default: object, days: int
+) -> dict[str, object]:
+    today = datetime.now(timezone.utc).date()
+    filled: dict[str, object] = {}
+    for offset in range(days - 1, -1, -1):
+        d = today - timedelta(days=offset)
+        date_s = d.isoformat()
+        filled[date_s] = data.get(date_s, default)
+    return filled
+
+
+def _fill_workout_days(by_day: dict[str, dict], days: int) -> dict[str, dict]:
+    today = datetime.now(timezone.utc).date()
+    filled: dict[str, dict] = {}
+    for offset in range(days - 1, -1, -1):
+        d = today - timedelta(days=offset)
+        date_s = d.isoformat()
+        if date_s in by_day:
+            filled[date_s] = by_day[date_s]
+        else:
+            filled[date_s] = {
+                "count": 0,
+                "total_minutes": 0,
+                "intensities": [],
+            }
+    return filled
+
+
+def build_context(
+    user_id: str,
+    log_type=None,
+    log_types=None,
+    days: int = 7,
+) -> dict:
     """Build the canonical context schema for AI prompts and analytics.
 
     Purpose:
         Aggregate recent logs and profile data into a standardized context.
     Expected Input types:
-        user_id (str), log_types (Optional[list[str]]), days (int).
+        user_id (str), log_type (Optional[str]),
+        log_types (Optional[list[str]]), days (int).
     Expected Output:
         dict containing the canonical context schema.
 
@@ -52,10 +130,9 @@ def build_context(user_id: str, log_types=None, days: int = 7) -> dict:
     shape. Any change must be communicated via a GitHub issue comment before
     implementation.
     """
-    all_types = ["workouts", "meals", "sleep", "hydration", "mood"]
-    requested = set(log_types or all_types)
+    requested = _normalize_log_types(log_type, log_types)
     now = datetime.now(timezone.utc)
-    cutoff = now - timedelta(days=days)
+    cutoff = datetime.utcnow() - timedelta(days=days)
     context: dict = {}
 
     try:
@@ -87,14 +164,20 @@ def build_context(user_id: str, log_types=None, days: int = 7) -> dict:
         by_day: dict[str, dict] = {}
 
         for doc in cursor:
-            doc["_id"] = str(doc["_id"])
-            entries.append(doc)
-            d = _date_str(doc["logged_at"])
+            entries.append(_serialize_doc(doc))
+            logged_at = doc.get("logged_at")
+            if isinstance(logged_at, datetime):
+                d = _date_str(logged_at)
+            else:
+                d = None
+            if not d:
+                continue
             if d not in by_day:
                 by_day[d] = {"count": 0, "total_minutes": 0, "intensities": []}
             by_day[d]["count"] += 1
             by_day[d]["total_minutes"] += doc.get("duration_minutes", 0)
             by_day[d]["intensities"].append(doc.get("intensity", ""))
+        by_day = _fill_workout_days(by_day, days)
 
         context["workouts"] = {"entries": entries, "by_day": by_day}
 
@@ -124,9 +207,9 @@ def build_context(user_id: str, log_types=None, days: int = 7) -> dict:
             date_key = result.get("_id")
             daily_totals[date_key] = int(result.get("total_kcal", 0))
             for entry in result.get("entries", []):
-                entry["_id"] = str(entry["_id"])
-                all_entries.append(entry)
+                all_entries.append(_serialize_doc(entry))
 
+        daily_totals = _fill_days(daily_totals, 0, days)
         today_str = _date_str(now)
         today_total_kcal = daily_totals.get(today_str, 0)
 
@@ -143,8 +226,7 @@ def build_context(user_id: str, log_types=None, days: int = 7) -> dict:
         )
         entries = []
         for doc in cursor:
-            doc["_id"] = str(doc["_id"])
-            entries.append(doc)
+            entries.append(_serialize_doc(doc))
 
         durations = [e.get("duration_minutes", 0) for e in entries]
         qualities = [e.get("quality_score", 0) for e in entries]
@@ -207,9 +289,9 @@ def build_context(user_id: str, log_types=None, days: int = 7) -> dict:
             date_key = result.get("_id")
             daily_totals[date_key] = int(result.get("total_ml", 0))
             for entry in result.get("entries", []):
-                entry["_id"] = str(entry["_id"])
-                all_entries.append(entry)
+                all_entries.append(_serialize_doc(entry))
 
+        daily_totals = _fill_days(daily_totals, 0, days)
         today_str = _date_str(now)
         today_total_ml = daily_totals.get(today_str, 0)
 
@@ -226,8 +308,7 @@ def build_context(user_id: str, log_types=None, days: int = 7) -> dict:
         )
         entries = []
         for doc in cursor:
-            doc["_id"] = str(doc["_id"])
-            entries.append(doc)
+            entries.append(_serialize_doc(doc))
 
         scores = [e.get("mood_score", 0) for e in entries]
         avg_score = sum(scores) / len(scores) if scores else 0.0
