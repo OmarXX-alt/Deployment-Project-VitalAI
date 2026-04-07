@@ -7,6 +7,11 @@ from dotenv import load_dotenv
 # This ensures INIT_DB and other env vars are available when Config is evaluated
 load_dotenv()
 
+# If DB init is disabled and no MONGO_URI is provided, set a safe default.
+# This avoids production config validation failures in smoke-test containers.
+if os.getenv("INIT_DB", "false").lower() != "true" and not os.getenv("MONGO_URI"):
+    os.environ["MONGO_URI"] = "mongodb://localhost:27017/vitalai"
+
 from flask import Flask, jsonify, render_template
 
 from main.persistence.extensions import mongo
