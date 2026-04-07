@@ -1,0 +1,15 @@
+# Render Blueprint configuration
+services:
+  - type: web
+    name: vitalai
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 2 main.server.app:app
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: DB_NAME
+        value: vitalai
+      # FIX: Ensure MONGO_URI is purely runtime-assigned (Rule 6)
+      - key: MONGO_URI
+        sync: false
