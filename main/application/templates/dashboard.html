@@ -125,7 +125,8 @@
             .then(response => response.json().then(data => ({ response, data })))
             .then(({ response, data }) => {
                 if (response.ok) {
-                    showAI('meal-ai', data.reaction || '✅ Meal logged!');
+                    const reactionMessage = data.reaction && data.reaction.message;
+                    showAI('meal-ai', reactionMessage || '✅ Meal logged!');
                     clearMealForm();
                 } else {
                     const errorFields = Array.isArray(data.fields) ? data.fields.join(' | ') : null;
@@ -163,7 +164,8 @@
             .then(response => response.json().then(data => ({ response, data })))
             .then(({ response, data }) => {
                 if (response.ok) {
-                    showAI('workout-ai', data.reaction || '💪 Workout logged!');
+                    const reactionMessage = data.reaction && data.reaction.message;
+                    showAI('workout-ai', reactionMessage || '💪 Workout logged!');
                     clearWorkoutForm();
                 } else {
                     const errorFields = Array.isArray(data.fields) ? data.fields.join(' | ') : null;
@@ -200,7 +202,8 @@
             .then(response => response.json().then(data => ({ response, data })))
             .then(({ response, data }) => {
                 if (response.ok) {
-                    showAI('sleep-ai', data.reaction || '😴 Sleep logged!');
+                    const reactionMessage = data.reaction && data.reaction.message;
+                    showAI('sleep-ai', reactionMessage || '😴 Sleep logged!');
                     clearSleepForm();
                 } else {
                     const errorFields = Array.isArray(data.fields) ? data.fields.join(' | ') : null;
@@ -231,7 +234,8 @@
             .then(response => response.json().then(data => ({ response, data })))
             .then(({ response, data }) => {
                 if (response.ok) {
-                    showAI('water-ai', data.reaction || '💧 Water logged!');
+                    const reactionMessage = data.reaction && data.reaction.message;
+                    showAI('water-ai', reactionMessage || '💧 Water logged!');
                     document.getElementById('water-ml').value = '';
                 } else {
                     const errorFields = Array.isArray(data.fields) ? data.fields.join(' | ') : null;
@@ -260,7 +264,8 @@
             .then(response => response.json().then(data => ({ response, data })))
             .then(({ response, data }) => {
                 if (response.ok) {
-                    showAI('mood-ai', data.reaction || '😊 Mood logged!');
+                    const reactionMessage = data.reaction && data.reaction.message;
+                    showAI('mood-ai', reactionMessage || '😊 Mood logged!');
                     document.getElementById('mood-notes').value = '';
                 } else {
                     const errorFields = Array.isArray(data.fields) ? data.fields.join(' | ') : null;
@@ -271,12 +276,23 @@
         }
 
         function getWeeklyInsight() {
+            showAI('weekly-insight', '⏳ Generating insight...');
             fetch('/api/insights/weekly', {
                 headers: { 'Authorization': 'Bearer ' + token }
             })
             .then(response => response.json())
             .then(data => {
-                showAI('weekly-insight', data.insight || 'No insights yet. Keep logging!');
+                if (data.error === 'insight_unavailable') {
+                    showAI('weekly-insight', 'No insights yet. Keep logging!');
+                    return;
+                }
+                const positives = Array.isArray(data.positives) ? data.positives : [];
+                const suggestions = Array.isArray(data.suggestions) ? data.suggestions : [];
+                const concern = data.concern || 'No concerns reported.';
+                const message = `Positives: ${positives.join(' • ')}\n` +
+                    `Concern: ${concern}\n` +
+                    `Suggestions: ${suggestions.join(' • ')}`;
+                showAI('weekly-insight', message);
             })
             .catch(error => showAI('weekly-insight', '❌ Error getting insights'));
         }

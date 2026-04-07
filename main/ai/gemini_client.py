@@ -52,11 +52,20 @@ def call_gemini(prompt: str, timeout: int = 3) -> str | None:
             timeout=timeout,
         )
         if not response.ok:
+            snippet = response.text[:200] if response.text else ""
             logger.warning(
-                "Gemini request failed with status %s", response.status_code
+                "Gemini request failed with status %s: %s",
+                response.status_code,
+                snippet,
             )
             return None
-        data = response.json()
+        try:
+            data = response.json()
+        except Exception as exc:
+            snippet = response.text[:200] if response.text else ""
+            logger.warning("Gemini response JSON error: %s", exc)
+            logger.warning("Gemini response snippet: %s", snippet)
+            return None
         candidates = data.get("candidates") or []
         if not candidates:
             return None
