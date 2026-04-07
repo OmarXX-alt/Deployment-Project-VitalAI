@@ -1,3 +1,4 @@
+# Render Blueprint configuration
 services:
   - type: web
     name: vitalai
@@ -9,5 +10,6 @@ services:
         value: production
       - key: DB_NAME
         value: vitalai
+      # FIX: Ensure MONGO_URI is purely runtime-assigned (Rule 6)
       - key: MONGO_URI
         sync: false

@@ -1,10 +1,8 @@
-def test_index_route_returns_html(client):
+def test_index_route_returns_json(client):
     response = client.get("/")
 
     assert response.status_code == 200
-    body = response.data.lower()
-    assert b"doctype html" in body
-    assert b"vitalai" in body
+    assert response.get_json() == {"message": "Welcome to VitalAI"}
 
 
 def test_health_route_returns_ok(client):

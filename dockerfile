@@ -1,22 +1,21 @@
-# - Initialy, yse of python as the base for this project
+# Base layer
 FROM python:3.11-slim AS base
 
-# - Set the working directory in the container
 WORKDIR /app
-# Copy requirements.txt to the working directory, saved as a separate layer for better caching of dependencies
+
+# Cache dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application code to the working directory
-# no application layer yet
+# Copy source application
 COPY . .
 
-# Since Render is in use: Expose the Port the application will run on
+# FIX: No MONGO_URI declared here to prevent accidental builds against dev (Rule 5)
 ENV PORT=5000
 ENV FLASK_ENV=production
 ENV INIT_DB=false
 EXPOSE $PORT
 
-# Using gunicron for production, running a shell to resolve $PORT at runtime
+# Run via Gunicorn
 CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:$PORT --workers 2 main.server.app:app"]
 
