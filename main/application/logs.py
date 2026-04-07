@@ -13,7 +13,6 @@ from main.persistence.schemas import (
 )
 from main.server.middleware.auth import require_auth
 
-
 logs_bp = Blueprint("logs", __name__)
 
 workout_schema = WorkoutLogSchema()
@@ -35,7 +34,15 @@ def log_workout():
     body = request.get_json(silent=True)
     if body is None:
         current_app.logger.info("log_workout: missing or invalid JSON body")
-        return jsonify({"error": "invalid_json", "message": "Request body is required."}), 400
+        return (
+            jsonify(
+                {
+                    "error": "invalid_json",
+                    "message": "Request body is required.",
+                }
+            ),
+            400,
+        )
 
     validated, errors = validate_schema(workout_schema, body)
     if errors:
@@ -61,7 +68,15 @@ def log_meal():
     body = request.get_json(silent=True)
     if body is None:
         current_app.logger.info("log_meal: missing or invalid JSON body")
-        return jsonify({"error": "invalid_json", "message": "Request body is required."}), 400
+        return (
+            jsonify(
+                {
+                    "error": "invalid_json",
+                    "message": "Request body is required.",
+                }
+            ),
+            400,
+        )
 
     validated, errors = validate_schema(meal_schema, body)
     if errors:
@@ -85,7 +100,15 @@ def log_sleep():
     body = request.get_json(silent=True)
     if body is None:
         current_app.logger.info("log_sleep: missing or invalid JSON body")
-        return jsonify({"error": "invalid_json", "message": "Request body is required."}), 400
+        return (
+            jsonify(
+                {
+                    "error": "invalid_json",
+                    "message": "Request body is required.",
+                }
+            ),
+            400,
+        )
 
     validated, errors = validate_schema(sleep_schema, body)
     if errors:
@@ -108,7 +131,15 @@ def log_hydration():
     body = request.get_json(silent=True)
     if body is None:
         current_app.logger.info("log_hydration: missing or invalid JSON body")
-        return jsonify({"error": "invalid_json", "message": "Request body is required."}), 400
+        return (
+            jsonify(
+                {
+                    "error": "invalid_json",
+                    "message": "Request body is required.",
+                }
+            ),
+            400,
+        )
 
     validated, errors = validate_schema(hydration_schema, body)
     if errors:
@@ -130,7 +161,15 @@ def log_mood():
     body = request.get_json(silent=True)
     if body is None:
         current_app.logger.info("log_mood: missing or invalid JSON body")
-        return jsonify({"error": "invalid_json", "message": "Request body is required."}), 400
+        return (
+            jsonify(
+                {
+                    "error": "invalid_json",
+                    "message": "Request body is required.",
+                }
+            ),
+            400,
+        )
 
     validated, errors = validate_schema(mood_schema, body)
     if errors:
@@ -155,16 +194,34 @@ def log_mood():
 def log_history(log_type: str):
     valid_types = {"workout", "meal", "sleep", "hydration", "mood"}
     if log_type not in valid_types:
-        return jsonify({"error": "invalid_log_type", "message": "Unsupported log type."}), 400
+        return (
+            jsonify(
+                {
+                    "error": "invalid_log_type",
+                    "message": "Unsupported log type.",
+                }
+            ),
+            400,
+        )
 
     days_param = request.args.get("days", "7")
     try:
         days = int(days_param)
     except ValueError:
-        return jsonify({"error": "invalid_days", "message": "days must be an integer."}), 400
+        return (
+            jsonify(
+                {
+                    "error": "invalid_days",
+                    "message": "days must be an integer.",
+                }
+            ),
+            400,
+        )
 
     days = max(1, min(days, 90))
 
     # TODO: [Logic-Issue-010]
-    response_body, status = log_service.get_log_history(g.user_id, log_type, days)
+    response_body, status = log_service.get_log_history(
+        g.user_id, log_type, days
+    )
     return jsonify(response_body), status

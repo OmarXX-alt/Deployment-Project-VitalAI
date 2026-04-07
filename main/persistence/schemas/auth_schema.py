@@ -31,7 +31,9 @@ def _flatten_errors(errors, prefix: str = "") -> list[str]:
 class RegisterSchema(Schema):
     display_name = fields.Str(required=True, validate=Length(min=2, max=50))
     email = fields.Email(required=True)
-    password = fields.Str(required=True, validate=Length(min=8), load_only=True)
+    password = fields.Str(
+        required=True, validate=Length(min=8), load_only=True
+    )
 
     @pre_load
     def normalize_email(self, data, **kwargs):

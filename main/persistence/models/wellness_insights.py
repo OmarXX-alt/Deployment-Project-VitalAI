@@ -25,7 +25,9 @@ def _require_str(value: Any, field_name: str) -> str:
 def _require_str_list(value: Any, field_name: str) -> list[str]:
     if value is None:
         raise ValueError(f"{field_name} is required")
-    if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+    if not isinstance(value, list) or not all(
+        isinstance(item, str) for item in value
+    ):
         raise ValueError(f"{field_name} must be a list of strings")
     return list(value)
 

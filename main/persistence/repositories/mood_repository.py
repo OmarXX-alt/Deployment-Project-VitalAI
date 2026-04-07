@@ -30,7 +30,9 @@ def insert(doc: dict) -> str:
     except (DuplicateKeyError, WriteError, OperationFailure) as exc:
         user_id = doc.get("user_id") if isinstance(doc, dict) else None
         logger.error("insert_mood failed user_id=%s", user_id, exc_info=True)
-        raise RuntimeError(f"insert_mood failed for user {user_id}: {exc}") from exc
+        raise RuntimeError(
+            f"insert_mood failed for user {user_id}: {exc}"
+        ) from exc
 
 
 def find_by_id(doc_id: str) -> dict | None:
@@ -41,19 +43,29 @@ def find_by_id(doc_id: str) -> dict | None:
         return to_json_serializable(doc) if doc else None
     except (DuplicateKeyError, WriteError, OperationFailure) as exc:
         logger.error("find_mood_by_id failed id=%s", doc_id, exc_info=True)
-        raise RuntimeError(f"find_mood_by_id failed for id {doc_id}: {exc}") from exc
+        raise RuntimeError(
+            f"find_mood_by_id failed for id {doc_id}: {exc}"
+        ) from exc
 
 
 def find_by_user(user_id: str) -> list[dict]:
     user_object_id = validate_object_id(user_id)
     try:
-        cursor = get_db().mood_logs.find({"user_id": user_object_id}, _MOOD_PROJECTION)
+        cursor = get_db().mood_logs.find(
+            {"user_id": user_object_id}, _MOOD_PROJECTION
+        )
         docs = [to_json_serializable(doc) for doc in cursor]
-        logger.debug("find_mood_by_user ok user_id=%s count=%s", user_id, len(docs))
+        logger.debug(
+            "find_mood_by_user ok user_id=%s count=%s", user_id, len(docs)
+        )
         return docs
     except (DuplicateKeyError, WriteError, OperationFailure) as exc:
-        logger.error("find_mood_by_user failed user_id=%s", user_id, exc_info=True)
-        raise RuntimeError(f"find_mood_by_user failed for user {user_id}: {exc}") from exc
+        logger.error(
+            "find_mood_by_user failed user_id=%s", user_id, exc_info=True
+        )
+        raise RuntimeError(
+            f"find_mood_by_user failed for user {user_id}: {exc}"
+        ) from exc
 
 
 def find_recent(user_id: str, days: int = 7) -> list[dict]:
@@ -62,19 +74,27 @@ def find_recent(user_id: str, days: int = 7) -> list[dict]:
         cutoff = datetime.now(timezone.utc) - timedelta(days=days)
         cursor = (
             get_db()
-            .mood_logs
-            .find(
+            .mood_logs.find(
                 {"user_id": user_object_id, "logged_at": {"$gte": cutoff}},
                 _MOOD_PROJECTION,
             )
             .sort("logged_at", -1)
         )
         docs = [to_json_serializable(doc) for doc in cursor]
-        logger.debug("find_recent_mood ok user_id=%s days=%s count=%s", user_id, days, len(docs))
+        logger.debug(
+            "find_recent_mood ok user_id=%s days=%s count=%s",
+            user_id,
+            days,
+            len(docs),
+        )
         return docs
     except (DuplicateKeyError, WriteError, OperationFailure) as exc:
-        logger.error("find_recent_mood failed user_id=%s", user_id, exc_info=True)
-        raise RuntimeError(f"find_recent_mood failed for user {user_id}: {exc}") from exc
+        logger.error(
+            "find_recent_mood failed user_id=%s", user_id, exc_info=True
+        )
+        raise RuntimeError(
+            f"find_recent_mood failed for user {user_id}: {exc}"
+        ) from exc
 
 
 def update_ai_reaction(log_id: str, reaction: dict) -> bool:
@@ -89,7 +109,9 @@ def update_ai_reaction(log_id: str, reaction: dict) -> bool:
         return updated
     except (DuplicateKeyError, WriteError, OperationFailure) as exc:
         logger.error("update_mood_ai failed id=%s", log_id, exc_info=True)
-        raise RuntimeError(f"update_mood_ai failed for id {log_id}: {exc}") from exc
+        raise RuntimeError(
+            f"update_mood_ai failed for id {log_id}: {exc}"
+        ) from exc
 
 
 def delete_by_id(doc_id: str) -> bool:
@@ -101,4 +123,6 @@ def delete_by_id(doc_id: str) -> bool:
         return deleted
     except (DuplicateKeyError, WriteError, OperationFailure) as exc:
         logger.error("delete_mood_by_id failed id=%s", doc_id, exc_info=True)
-        raise RuntimeError(f"delete_mood_by_id failed for id {doc_id}: {exc}") from exc
+        raise RuntimeError(
+            f"delete_mood_by_id failed for id {doc_id}: {exc}"
+        ) from exc

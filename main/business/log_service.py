@@ -100,7 +100,9 @@ def save_workout_log(
             context,
             new_entry,
             gemini_api_key=current_app.config.get("GEMINI_API_KEY", ""),
-            timeout_seconds=current_app.config.get("GEMINI_TIMEOUT_SECONDS", 3),
+            timeout_seconds=current_app.config.get(
+                "GEMINI_TIMEOUT_SECONDS", 3
+            ),
         )
     except Exception:
         reaction = None
@@ -192,7 +194,9 @@ def save_meal_log(
             context,
             new_entry,
             gemini_api_key=current_app.config.get("GEMINI_API_KEY", ""),
-            timeout_seconds=current_app.config.get("GEMINI_TIMEOUT_SECONDS", 3),
+            timeout_seconds=current_app.config.get(
+                "GEMINI_TIMEOUT_SECONDS", 3
+            ),
         )
     except Exception:
         reaction = None
@@ -222,8 +226,8 @@ def save_sleep_log(
     Purpose:
         Record sleep data and return the computed duration plus AI reaction.
     Expected Input types:
-        user_id (str), sleep_start (datetime or str), sleep_end (datetime or str),
-        quality_score (int).
+        user_id (str), sleep_start (datetime or str),
+        sleep_end (datetime or str), quality_score (int).
     Expected Output:
         tuple[dict, int] with sleep log response shape and status 201.
 
@@ -255,7 +259,9 @@ def save_sleep_log(
     result = mongo.sleep_logs.insert_one(doc)
     log_id = str(result.inserted_id)
 
-    context = aggregation_service.build_context(user_id, log_types=["sleep"], days=7)
+    context = aggregation_service.build_context(
+        user_id, log_types=["sleep"], days=7
+    )
 
     new_entry = {
         "sleep_start": sleep_start.isoformat(),
@@ -272,7 +278,9 @@ def save_sleep_log(
             context,
             new_entry,
             gemini_api_key=current_app.config.get("GEMINI_API_KEY", ""),
-            timeout_seconds=current_app.config.get("GEMINI_TIMEOUT_SECONDS", 3),
+            timeout_seconds=current_app.config.get(
+                "GEMINI_TIMEOUT_SECONDS", 3
+            ),
         )
     except Exception:
         reaction = None
@@ -337,7 +345,9 @@ def save_hydration_log(
 
     hydration_goal = None
     try:
-        user = mongo.users.find_one({"_id": ObjectId(user_id)}, {"hydration_goal": 1})
+        user = mongo.users.find_one(
+            {"_id": ObjectId(user_id)}, {"hydration_goal": 1}
+        )
         hydration_goal = user.get("hydration_goal") if user else None
     except InvalidId:
         hydration_goal = None
@@ -365,7 +375,9 @@ def save_hydration_log(
             context,
             new_entry,
             gemini_api_key=current_app.config.get("GEMINI_API_KEY", ""),
-            timeout_seconds=current_app.config.get("GEMINI_TIMEOUT_SECONDS", 3),
+            timeout_seconds=current_app.config.get(
+                "GEMINI_TIMEOUT_SECONDS", 3
+            ),
         )
     except Exception:
         reaction = None
@@ -436,7 +448,11 @@ def save_mood_log(
         user_id, log_types=["mood", "sleep", "workouts"], days=7
     )
 
-    new_entry = {"mood_score": mood_score, "note": clean_note, "date": today_date}
+    new_entry = {
+        "mood_score": mood_score,
+        "note": clean_note,
+        "date": today_date,
+    }
     reaction = None
     try:
         from flask import current_app
@@ -446,7 +462,9 @@ def save_mood_log(
             context,
             new_entry,
             gemini_api_key=current_app.config.get("GEMINI_API_KEY", ""),
-            timeout_seconds=current_app.config.get("GEMINI_TIMEOUT_SECONDS", 3),
+            timeout_seconds=current_app.config.get(
+                "GEMINI_TIMEOUT_SECONDS", 3
+            ),
         )
     except Exception:
         reaction = None
@@ -463,7 +481,9 @@ def save_mood_log(
     )
 
 
-def get_log_history(user_id: str, log_type: str, days: int = 7) -> tuple[dict, int]:
+def get_log_history(
+    user_id: str, log_type: str, days: int = 7
+) -> tuple[dict, int]:
     """Return log history data for a given type.
 
     Purpose:
@@ -508,4 +528,7 @@ def get_log_history(user_id: str, log_type: str, days: int = 7) -> tuple[dict, i
                 doc[key] = val.isoformat()
         entries.append(doc)
 
-    return ({"log_type": log_type, "entries": entries, "count": len(entries)}, 200)
+    return (
+        {"log_type": log_type, "entries": entries, "count": len(entries)},
+        200,
+    )

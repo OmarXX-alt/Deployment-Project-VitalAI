@@ -31,7 +31,9 @@ def _group_by_day(logs: list[dict], key: str) -> dict[str, list[dict]]:
     grouped: dict[str, list[dict]] = {}
     for log in logs:
         value = log.get(key)
-        dt_value = _parse_iso_datetime(value) if isinstance(value, str) else None
+        dt_value = (
+            _parse_iso_datetime(value) if isinstance(value, str) else None
+        )
         if dt_value is None:
             continue
         day_key = dt_value.date().isoformat()
@@ -61,7 +63,8 @@ def _sleep_summary(logs: list[dict]) -> str:
     if avg_duration is None or avg_quality is None:
         return "No sleep logs in the last 7 days"
     return (
-        f"Avg {avg_duration:.1f} hrs/night, avg quality {avg_quality:.1f}/5 over 7 days"
+        f"Avg {avg_duration:.1f} hrs/night, "
+        f"avg quality {avg_quality:.1f}/5 over 7 days"
     )
 
 
@@ -78,7 +81,8 @@ def _workout_summary(logs: list[dict]) -> str:
     total_sessions = len(logs)
     return (
         f"{total_sessions} sessions: {intensity_counts['high']} high, "
-        f"{intensity_counts['medium']} medium, {intensity_counts['low']} low intensity"
+        f"{intensity_counts['medium']} medium, "
+        f"{intensity_counts['low']} low intensity"
     )
 
 
@@ -98,7 +102,9 @@ def _calorie_summary(logs: list[dict]) -> str:
     days_logged = len(grouped)
     if avg_daily is None:
         return "No meals logged in the last 7 days"
-    return f"Avg {avg_daily:.0f} kcal/day, logged {days_logged} of 7 days"
+    return (
+        f"Avg {avg_daily:.0f} kcal/day, logged {days_logged} of 7 days"
+    )
 
 
 def _hydration_summary(logs: list[dict], goal_ml: int | None) -> str:
@@ -144,7 +150,9 @@ def _mood_summary(mood_logs: list[dict], sleep_logs: list[dict]) -> str:
             end_dt = _parse_iso_datetime(end_value)
             if end_dt is not None:
                 sleep_by_day[end_dt.date().isoformat()] = float(duration)
-    high_sleep_days = {day for day, duration in sleep_by_day.items() if duration >= 7.5}
+    high_sleep_days = {
+        day for day, duration in sleep_by_day.items() if duration >= 7.5
+    }
     mood_after_sleep = []
     for log in mood_logs:
         logged_at = log.get("logged_at")
@@ -152,14 +160,19 @@ def _mood_summary(mood_logs: list[dict], sleep_logs: list[dict]) -> str:
         if not isinstance(rating, (int, float)):
             continue
         dt_value = (
-            _parse_iso_datetime(logged_at) if isinstance(logged_at, str) else None
+            _parse_iso_datetime(logged_at)
+            if isinstance(logged_at, str)
+            else None
         )
         if dt_value is None:
             continue
         if dt_value.date().isoformat() in high_sleep_days:
             mood_after_sleep.append(float(rating))
     if mood_after_sleep and _average(mood_after_sleep) >= avg_mood:
-        return f"Avg mood {avg_mood:.1f}/5, best days follow 7.5+ hr sleep"
+        return (
+            f"Avg mood {avg_mood:.1f}/5, "
+            "best days follow 7.5+ hr sleep"
+        )
     return f"Avg mood {avg_mood:.1f}/5 over 7 days"
 
 
@@ -169,15 +182,24 @@ def get_user_context(user_id: str, log_type: str = "all") -> dict[str, str]:
 
     Parameters:
         user_id: User identifier as a string.
-        log_type: One of 'all', 'workout', 'meal', 'sleep', 'hydration', 'mood'.
+        log_type: One of 'all', 'workout', 'meal', 'sleep',
+        'hydration', 'mood'.
 
     Returns:
         A dict of human-readable summary strings keyed by summary type.
     """
-    allowed_types = {"all", "workout", "meal", "sleep", "hydration", "mood"}
+    allowed_types = {
+        "all",
+        "workout",
+        "meal",
+        "sleep",
+        "hydration",
+        "mood",
+    }
     if log_type not in allowed_types:
         raise ValueError(
-            "log_type must be one of: all, workout, meal, sleep, hydration, mood"
+            "log_type must be one of: all, workout, meal, sleep, hydration, "
+            "mood"
         )
 
     context: dict[str, str] = {}
@@ -203,7 +225,9 @@ def get_user_context(user_id: str, log_type: str = "all") -> dict[str, str]:
             goal_value = user_doc.get("hydration_goal_ml")
             if isinstance(goal_value, (int, float)):
                 goal_ml = int(goal_value)
-        context["hydration_summary"] = _hydration_summary(hydration_logs, goal_ml)
+        context["hydration_summary"] = _hydration_summary(
+            hydration_logs, goal_ml
+        )
 
     if log_type in {"all", "mood"}:
         mood_logs = mood_repository.find_recent(user_id)

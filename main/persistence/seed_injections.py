@@ -25,7 +25,9 @@ class DatabaseConnection:
         self.db = None
 
     def init_app(self, app):
-        mongo_uri = os.environ.get("MONGO_URI", "mongodb://localhost:27017/vital_ai")
+        mongo_uri = os.environ.get(
+            "MONGO_URI", "mongodb://localhost:27017/vital_ai"
+        )
         app.config.setdefault("MONGO_URI", mongo_uri)
         client_kwargs = {
             "serverSelectionTimeoutMS": 5000,
@@ -46,7 +48,9 @@ class DatabaseConnection:
         app.db = self.db
 
 
-env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
+env_path = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", ".env")
+)
 load_dotenv(dotenv_path=env_path)
 
 db_conn = DatabaseConnection()

@@ -1,0 +1,8 @@
+[flake8]
+max-line-length = 79
+exclude =
+    .venv,
+    venv,
+    **/site-packages,
+    **/__pycache__,
+    main/persistence/seed_injections.py

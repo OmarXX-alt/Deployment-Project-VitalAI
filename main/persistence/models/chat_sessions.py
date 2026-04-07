@@ -32,7 +32,9 @@ def _ensure_datetime(value: datetime | None, field_name: str) -> datetime:
     return value
 
 
-def _validate_messages(messages: list[dict[str, object]]) -> list[dict[str, object]]:
+def _validate_messages(
+    messages: list[dict[str, object]],
+) -> list[dict[str, object]]:
     if not isinstance(messages, list):
         raise ValueError("messages must be a list of dicts")
     validated: list[dict[str, object]] = []
@@ -44,7 +46,9 @@ def _validate_messages(messages: list[dict[str, object]]) -> list[dict[str, obje
         timestamp = message.get("timestamp")
         role_value = _require_str(role, f"messages[{index}].role")
         content_value = _require_str(content, f"messages[{index}].content")
-        timestamp_value = _ensure_datetime(timestamp, f"messages[{index}].timestamp")
+        timestamp_value = _ensure_datetime(
+            timestamp, f"messages[{index}].timestamp"
+        )
         validated.append(
             {
                 "role": role_value,

@@ -31,7 +31,9 @@ def insert(doc: dict) -> str:
     except (DuplicateKeyError, WriteError, OperationFailure) as exc:
         email = doc.get("email") if isinstance(doc, dict) else None
         logger.error("insert_user failed for email=%s", email, exc_info=True)
-        raise RuntimeError(f"insert_user failed for email {email}: {exc}") from exc
+        raise RuntimeError(
+            f"insert_user failed for email {email}: {exc}"
+        ) from exc
 
 
 def find_by_id(doc_id: str) -> dict | None:
@@ -42,7 +44,9 @@ def find_by_id(doc_id: str) -> dict | None:
         return to_json_serializable(doc) if doc else None
     except (DuplicateKeyError, WriteError, OperationFailure) as exc:
         logger.error("find_user_by_id failed id=%s", doc_id, exc_info=True)
-        raise RuntimeError(f"find_user_by_id failed for id {doc_id}: {exc}") from exc
+        raise RuntimeError(
+            f"find_user_by_id failed for id {doc_id}: {exc}"
+        ) from exc
 
 
 def find_by_email(email: str) -> dict | None:
@@ -51,19 +55,29 @@ def find_by_email(email: str) -> dict | None:
         logger.debug("find_user_by_email ok email=%s", email)
         return to_json_serializable(doc) if doc else None
     except (DuplicateKeyError, WriteError, OperationFailure) as exc:
-        logger.error("find_user_by_email failed email=%s", email, exc_info=True)
-        raise RuntimeError(f"find_user_by_email failed for email {email}: {exc}") from exc
+        logger.error(
+            "find_user_by_email failed email=%s", email, exc_info=True
+        )
+        raise RuntimeError(
+            f"find_user_by_email failed for email {email}: {exc}"
+        ) from exc
 
 
 def find_by_user(user_id: str) -> list[dict]:
     user_object_id = validate_object_id(user_id)
     try:
-        doc = get_db().users.find_one({"_id": user_object_id}, _USER_PROJECTION)
+        doc = get_db().users.find_one(
+            {"_id": user_object_id}, _USER_PROJECTION
+        )
         logger.debug("find_user_by_user_id ok user_id=%s", user_id)
         return [to_json_serializable(doc)] if doc else []
     except (DuplicateKeyError, WriteError, OperationFailure) as exc:
-        logger.error("find_user_by_user_id failed user_id=%s", user_id, exc_info=True)
-        raise RuntimeError(f"find_user_by_user_id failed for user {user_id}: {exc}") from exc
+        logger.error(
+            "find_user_by_user_id failed user_id=%s", user_id, exc_info=True
+        )
+        raise RuntimeError(
+            f"find_user_by_user_id failed for user {user_id}: {exc}"
+        ) from exc
 
 
 def delete_by_id(doc_id: str) -> bool:
@@ -75,4 +89,6 @@ def delete_by_id(doc_id: str) -> bool:
         return deleted
     except (DuplicateKeyError, WriteError, OperationFailure) as exc:
         logger.error("delete_user_by_id failed id=%s", doc_id, exc_info=True)
-        raise RuntimeError(f"delete_user_by_id failed for id {doc_id}: {exc}") from exc
+        raise RuntimeError(
+            f"delete_user_by_id failed for id {doc_id}: {exc}"
+        ) from exc

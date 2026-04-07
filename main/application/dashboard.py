@@ -5,7 +5,6 @@ from flask import Blueprint, current_app, g, jsonify
 from main.business import aggregation_service, ai_service
 from main.server.middleware.auth import require_auth
 
-
 dashboard_bp = Blueprint("dashboard", __name__)
 
 
@@ -21,12 +20,13 @@ def dashboard():
         return jsonify({"error": "Failed to load dashboard"}), 500
 
 
-
 @dashboard_bp.get("/api/insights/weekly")
 @require_auth
 def weekly_insights():
     # TODO: [Logic-Issue-014]
-    context = aggregation_service.build_context(g.user_id, log_types=None, days=7)
+    context = aggregation_service.build_context(
+        g.user_id, log_types=None, days=7
+    )
     insights = ai_service.get_wellness_insights(
         g.user_id,
         context,
@@ -41,7 +41,10 @@ def weekly_insights():
                     "positives": None,
                     "concern": None,
                     "suggestions": None,
-                    "message": "Insights are temporarily unavailable. Please try again later.",
+                    "message": (
+                        "Insights are temporarily unavailable. "
+                        "Please try again later."
+                    ),
                 }
             ),
             200,

@@ -32,8 +32,12 @@ def register_user(
     # TODO: [Logic-Issue-001]
     Implementation checklist:
         1. bcrypt.hashpw(password.encode(), bcrypt.gensalt(rounds=12))
-        2. Build UserDocument, mongo.users.insert_one() — catch DuplicateKeyError → 409
-        3. Issue JWT: payload = {"user_id": str(inserted_id), "exp": now+expiry}
+        2. Build UserDocument, mongo.users.insert_one(), catch
+           DuplicateKeyError -> 409
+        3. Issue JWT: payload = {
+           "user_id": str(inserted_id),
+           "exp": now + expiry,
+           }
         4. Return {"token", "user_id", "display_name"}, 201
     """
     password_hash = bcrypt.hashpw(
@@ -73,7 +77,11 @@ def register_user(
     )
 
     return (
-        {"token": token, "user_id": inserted_id, "display_name": clean_display_name},
+        {
+            "token": token,
+            "user_id": inserted_id,
+            "display_name": clean_display_name,
+        },
         201,
     )
 
@@ -113,7 +121,9 @@ def login_user(
         return generic_401
 
     stored_hash = user["password_hash"]
-    if not bcrypt.checkpw(password.encode("utf-8"), stored_hash.encode("utf-8")):
+    if not bcrypt.checkpw(
+        password.encode("utf-8"), stored_hash.encode("utf-8")
+    ):
         return generic_401
 
     user_id = str(user["_id"])
@@ -168,7 +178,8 @@ def update_profile(user_id: str, updates: dict) -> tuple[dict, int]:
     """Update the authenticated user's profile fields.
 
     Purpose:
-        Apply partial updates to the user profile and return the updated record.
+        Apply partial updates to the user profile and return the updated
+        record.
     Expected Input types:
         user_id (str), updates (dict).
     Expected Output:

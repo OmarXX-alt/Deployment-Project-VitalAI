@@ -3,8 +3,11 @@ from __future__ import annotations
 from flask import Blueprint, current_app, jsonify, request
 
 from main.business import auth_service
-from main.persistence.schemas import LoginSchema, RegisterSchema, validate_schema
-
+from main.persistence.schemas import (
+    LoginSchema,
+    RegisterSchema,
+    validate_schema,
+)
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -17,7 +20,15 @@ def register():
     body = request.get_json(silent=True)
     if body is None:
         current_app.logger.info("register: missing or invalid JSON body")
-        return jsonify({"error": "invalid_json", "message": "Request body is required."}), 400
+        return (
+            jsonify(
+                {
+                    "error": "invalid_json",
+                    "message": "Request body is required.",
+                }
+            ),
+            400,
+        )
 
     validated, errors = validate_schema(register_schema, body)
     if errors:
@@ -42,7 +53,15 @@ def login():
     body = request.get_json(silent=True)
     if body is None:
         current_app.logger.info("login: missing or invalid JSON body")
-        return jsonify({"error": "invalid_json", "message": "Request body is required."}), 400
+        return (
+            jsonify(
+                {
+                    "error": "invalid_json",
+                    "message": "Request body is required.",
+                }
+            ),
+            400,
+        )
 
     validated, errors = validate_schema(login_schema, body)
     if errors:

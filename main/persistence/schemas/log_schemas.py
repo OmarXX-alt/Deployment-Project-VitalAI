@@ -30,17 +30,25 @@ def _flatten_errors(errors, prefix: str = "") -> list[str]:
 
 class ProfileUpdateSchema(Schema):
     display_name = fields.Str(required=False, validate=Length(min=2, max=50))
-    daily_calorie_target = fields.Int(required=False, validate=Range(min=500, max=10000))
-    hydration_goal = fields.Int(required=False, validate=Range(min=250, max=10000))
+    daily_calorie_target = fields.Int(
+        required=False, validate=Range(min=500, max=10000)
+    )
+    hydration_goal = fields.Int(
+        required=False, validate=Range(min=250, max=10000)
+    )
     wellness_goal = fields.Str(required=False, validate=Length(max=200))
 
 
 class WorkoutLogSchema(Schema):
     exercise_type = fields.Str(required=True, validate=Length(min=1, max=100))
-    duration_minutes = fields.Int(required=True, validate=Range(min=1, max=600))
+    duration_minutes = fields.Int(
+        required=True, validate=Range(min=1, max=600)
+    )
     sets = fields.Int(required=False, validate=Range(min=1))
     reps = fields.Int(required=False, validate=Range(min=1))
-    intensity = fields.Str(required=True, validate=OneOf(["low", "moderate", "high"]))
+    intensity = fields.Str(
+        required=True, validate=OneOf(["low", "moderate", "high"])
+    )
     logged_at = fields.DateTime(required=False, format="iso")
 
 

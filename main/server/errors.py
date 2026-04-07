@@ -13,7 +13,6 @@ def register_error_handlers(app):
         app.logger.exception("Database connection timeout: %s", error)
         return jsonify({"error": "Service Currently Unavailable"}), 503
 
-
     @app.errorhandler(500)
     def internal_error(error):
         app.logger.exception("Unhandled error: %s", error)

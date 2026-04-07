@@ -32,11 +32,15 @@ def _ensure_datetime(value: datetime | None, field_name: str) -> datetime:
     return value
 
 
-def _validate_ai_reaction(ai_reaction: dict[str, object] | None) -> dict[str, object] | None:
+def _validate_ai_reaction(
+    ai_reaction: dict[str, object] | None,
+) -> dict[str, object] | None:
     if ai_reaction is None:
         return None
     if not isinstance(ai_reaction, dict):
-        raise ValueError("ai_reaction must be a dict with keys: type, message, tags")
+        raise ValueError(
+            "ai_reaction must be a dict with keys: type, message, tags"
+        )
     reaction_type = ai_reaction.get("type")
     message = ai_reaction.get("message")
     tags = ai_reaction.get("tags")
@@ -44,7 +48,9 @@ def _validate_ai_reaction(ai_reaction: dict[str, object] | None) -> dict[str, ob
         raise ValueError("ai_reaction.type must be a string")
     if not isinstance(message, str):
         raise ValueError("ai_reaction.message must be a string")
-    if not isinstance(tags, list) or not all(isinstance(tag, str) for tag in tags):
+    if not isinstance(tags, list) or not all(
+        isinstance(tag, str) for tag in tags
+    ):
         raise ValueError("ai_reaction.tags must be a list of strings")
     return {"type": reaction_type, "message": message, "tags": list(tags)}
 

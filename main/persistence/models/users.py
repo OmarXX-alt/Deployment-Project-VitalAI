@@ -54,7 +54,9 @@ def create_user(
     email_value = _require_str(email, "email")
     password_value = _require_str(password_hash, "password_hash")
     display_value = _require_str(display_name, "display_name")
-    calorie_target = _optional_int(daily_calorie_target, "daily_calorie_target")
+    calorie_target = _optional_int(
+        daily_calorie_target, "daily_calorie_target"
+    )
     hydration_goal = _optional_int(hydration_goal_ml, "hydration_goal_ml")
     if wellness_goal is not None and not isinstance(wellness_goal, str):
         raise ValueError("wellness_goal must be a string")

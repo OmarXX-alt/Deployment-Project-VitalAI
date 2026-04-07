@@ -1,7 +1,7 @@
 """Main application factory and startup logic."""
 
 import os
-from flask import Flask, jsonify, render_template
+from flask import Flask, render_template
 from main.server.config import get_config
 from main.server.errors import register_error_handlers
 
@@ -13,8 +13,9 @@ def validate_env(config_class) -> None:
 
     missing = []
     # FIX: Explicitly fail if MONGO_URI is missing or points to localhost
-    if not config_class.MONGO_URI or \
-            config_class.MONGO_URI.startswith("mongodb://localhost"):
+    if not config_class.MONGO_URI or config_class.MONGO_URI.startswith(
+        "mongodb://localhost"
+    ):
         missing.append("MONGO_URI")
     if not config_class.DB_NAME:
         missing.append("DB_NAME")

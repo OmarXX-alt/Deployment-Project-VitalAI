@@ -48,8 +48,9 @@ def build_context(user_id: str, log_types=None, days: int = 7) -> dict:
         3. load profile targets
         4. return canonical context schema
 
-    This is the agreed output schema. Member 2 builds prompts against this shape.
-    Any change must be communicated via a GitHub issue comment before implementation.
+    This is the agreed output schema. Member 2 builds prompts against this
+    shape. Any change must be communicated via a GitHub issue comment before
+    implementation.
     """
     all_types = ["workouts", "meals", "sleep", "hydration", "mood"]
     requested = set(log_types or all_types)
@@ -70,7 +71,9 @@ def build_context(user_id: str, log_types=None, days: int = 7) -> dict:
         user = None
 
     context["profile"] = {
-        "daily_calorie_target": user.get("daily_calorie_target") if user else None,
+        "daily_calorie_target": (
+            user.get("daily_calorie_target") if user else None
+        ),
         "hydration_goal": user.get("hydration_goal") if user else None,
         "wellness_goal": user.get("wellness_goal") if user else None,
     }
@@ -302,7 +305,9 @@ def get_dashboard_data(user_id: str) -> dict:
     for point in hydration_7d:
         point["goal"] = hydration_goal
         if hydration_goal and hydration_goal > 0:
-            point["pct_of_goal"] = round((point["ml"] / hydration_goal) * 100, 1)
+            point["pct_of_goal"] = round(
+                (point["ml"] / hydration_goal) * 100, 1
+            )
         else:
             point["pct_of_goal"] = None
 

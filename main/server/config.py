@@ -9,6 +9,7 @@ load_dotenv()
 
 class Config:
     """Base configuration with generic defaults."""
+
     DEBUG = False
     TESTING = False
     INIT_DB = os.getenv("INIT_DB", "false").lower() == "true"
@@ -20,6 +21,7 @@ class Config:
 
 class DevelopmentConfig(Config):
     """Development settings."""
+
     DEBUG = True
     # Default URI if none provided in .env
     MONGO_URI = os.getenv("MONGO_URI") or "mongodb://localhost:27017/vitalai"
@@ -27,6 +29,7 @@ class DevelopmentConfig(Config):
 
 class TestingConfig(Config):
     """Testing settings. No real MongoDB connection should occur."""
+
     TESTING = True
     INIT_DB = False
     # Safe fallback URI that guarantees isolation
@@ -36,6 +39,7 @@ class TestingConfig(Config):
 
 class ProductionConfig(Config):
     """Production settings requiring explicit environment variables."""
+
     DEBUG = False
     # FIX: Do not default MONGO_URI here to force validation failure if absent
     MONGO_URI = os.getenv("MONGO_URI")

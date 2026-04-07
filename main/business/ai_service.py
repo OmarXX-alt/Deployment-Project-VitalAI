@@ -5,7 +5,6 @@ from typing import Optional
 from main.persistence.extensions import mongo
 from main.persistence.models import UserPublic
 
-
 SYSTEM_PERSONA = "You are VitalAI, a concise wellness assistant."
 
 
@@ -22,12 +21,15 @@ def get_reaction(
         Produce a lightweight reaction for a single log entry.
     Expected Input / Output:
         log_type (str), context (dict), new_entry (dict), gemini_api_key (str),
-        timeout_seconds (int) → Optional[dict] {"type", "message", "tags"}.
+        timeout_seconds (int) -> Optional[dict] {
+            "type", "message", "tags"
+        }.
 
     # TODO: [Logic-Issue-013]
     Prompt engineering contract:
         System persona: You are VitalAI, a concise wellness assistant.
-        Instruction: Return a brief supportive reaction tailored to the log entry.
+        Instruction: Return a brief supportive reaction tailored to the log
+        entry.
         JSON schema: {"type": str, "message": str, "tags": [str, str]}
     """
     _ = (mongo, UserPublic)
@@ -45,16 +47,22 @@ def get_wellness_insights(
     Purpose:
         Summarize positives, concerns, and suggestions for the past week.
     Expected Input / Output:
-        user_id (str), context (dict), gemini_api_key (str), timeout_seconds (int)
-        → Optional[dict] {"positives": [str,str], "concern": str,
-        "suggestions": [str,str,str]}.
+        user_id (str), context (dict), gemini_api_key (str),
+        timeout_seconds (int) -> Optional[dict] {
+            "positives": [str, str],
+            "concern": str,
+            "suggestions": [str, str, str],
+        }.
 
     # TODO: [Logic-Issue-014]
     Prompt engineering contract:
         System persona: You are VitalAI, a concise wellness assistant.
         Instruction: Summarize weekly positives, concerns, and suggestions.
-        JSON schema: {"positives": [str, str], "concern": str,
-                      "suggestions": [str, str, str]}
+        JSON schema: {
+            "positives": [str, str],
+            "concern": str,
+            "suggestions": [str, str, str],
+        }
     """
     _ = mongo
     return None
@@ -71,8 +79,11 @@ def get_goal_coach_plan(
     Purpose:
         Provide a structured, week-by-week plan for a user goal.
     Expected Input / Output:
-        goal_text (str), context (dict), gemini_api_key (str), timeout_seconds (int)
-        → Optional[dict] {"goal": str, "weeks": [{"week": int, "tasks": [str]}]}.
+        goal_text (str), context (dict), gemini_api_key (str),
+        timeout_seconds (int) -> Optional[dict] {
+            "goal": str,
+            "weeks": [{"week": int, "tasks": [str]}],
+        }.
 
     # TODO: [Logic-Issue-027]
     Prompt engineering contract:
@@ -97,8 +108,9 @@ def get_chat_response(
     Purpose:
         Respond to a chat message using recent context and message history.
     Expected Input / Output:
-        message (str), history (list[dict]), context (dict), gemini_api_key (str),
-        timeout_seconds (int), max_history_turns (int) → Optional[str].
+        message (str), history (list[dict]), context (dict),
+        gemini_api_key (str), timeout_seconds (int),
+        max_history_turns (int) -> Optional[str].
 
     # TODO: [Logic-Issue-028]
     Prompt engineering contract:

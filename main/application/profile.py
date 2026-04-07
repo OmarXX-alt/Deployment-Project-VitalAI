@@ -6,7 +6,6 @@ from main.business import auth_service
 from main.persistence.schemas import ProfileUpdateSchema, validate_schema
 from main.server.middleware.auth import require_auth
 
-
 profile_bp = Blueprint("profile", __name__)
 
 profile_schema = ProfileUpdateSchema()
@@ -25,13 +24,23 @@ def profile_get():
 def profile_update():
     body = request.get_json(silent=True)
     if body is None:
-        return jsonify({"error": "invalid_json", "message": "Request body is required."}), 400
+        return (
+            jsonify(
+                {
+                    "error": "invalid_json",
+                    "message": "Request body is required.",
+                }
+            ),
+            400,
+        )
 
     validated, errors = validate_schema(profile_schema, body)
     if errors:
         return jsonify({"error": "validation_error", "fields": errors}), 422
 
-    updates = {key: value for key, value in validated.items() if value is not None}
+    updates = {
+        key: value for key, value in validated.items() if value is not None
+    }
 
     # TODO: [Logic-Issue-004b]
     response_body, status = auth_service.update_profile(g.user_id, updates)
