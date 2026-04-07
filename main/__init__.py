@@ -1,1 +1,0 @@
-"""VitalAI application package."""

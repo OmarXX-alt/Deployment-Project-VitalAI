@@ -3,27 +3,25 @@ VitalAI — MongoDB seed script
 Usage:  python seed.py
         MONGO_URI="mongodb+srv://..." python seed.py
 """
-
+ 
 import os
 from datetime import datetime, timezone
 from flask import Flask
 from pymongo import MongoClient
 from dotenv import load_dotenv
-
 try:
     import certifi
 except Exception:
     certifi = None
-
-
+ 
+ 
 # ── Reuse the project's DatabaseConnection exactly as written ─────────────────
-
-
+ 
 class DatabaseConnection:
     def __init__(self):
         self.client = None
         self.db = None
-
+ 
     def init_app(self, app):
         mongo_uri = os.environ.get("MONGO_URI", "mongodb://localhost:27017/vital_ai")
         app.config.setdefault("MONGO_URI", mongo_uri)
@@ -44,48 +42,38 @@ class DatabaseConnection:
         except Exception as e:
             print(f"Failed to connect to MongoDB: {e}")
         app.db = self.db
-
-
+ 
 env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
 load_dotenv(dotenv_path=env_path)
 
 db_conn = DatabaseConnection()
-
-
+ 
 def get_db():
     return db_conn.db
-
-
+ 
+ 
 # ── Helpers ───────────────────────────────────────────────────────────────────
-
-
+ 
 def dt(iso: str) -> datetime:
     """Parse an ISO string into a UTC-aware datetime."""
     return datetime.fromisoformat(iso).replace(tzinfo=timezone.utc)
-
-
+ 
+ 
 # ── Seed data ─────────────────────────────────────────────────────────────────
-
-
+ 
 def seed_injections():
     db = get_db()
-
+ 
     # ── Drop existing collections so the script is idempotent ────────────────
     collections = [
-        "users",
-        "workout_logs",
-        "meal_logs",
-        "sleep_logs",
-        "hydration_logs",
-        "mood_logs",
-        "wellness_insights",
-        "goal_plans",
-        "chat_sessions",
+        "users", "workout_logs", "meal_logs", "sleep_logs",
+        "hydration_logs", "mood_logs", "wellness_insights",
+        "goal_plans", "chat_sessions",
     ]
     for col in collections:
         db[col].drop()
     print("Collections cleared.")
-
+ 
     # ── User ─────────────────────────────────────────────────────────────────
     user = {
         "email": "sara@example.com",
@@ -98,7 +86,7 @@ def seed_injections():
     }
     user_id = db.users.insert_one(user).inserted_id
     print(f"✓ users           → _id: {user_id}")
-
+ 
     # ── Workout logs ─────────────────────────────────────────────────────────
     workout_logs = [
         {
@@ -155,7 +143,7 @@ def seed_injections():
     ]
     result = db.workout_logs.insert_many(workout_logs)
     print(f"✓ workout_logs     → {len(result.inserted_ids)} documents")
-
+ 
     # ── Meal logs ─────────────────────────────────────────────────────────────
     meal_logs = [
         {
@@ -221,14 +209,14 @@ def seed_injections():
     ]
     result = db.meal_logs.insert_many(meal_logs)
     print(f"✓ meal_logs        → {len(result.inserted_ids)} documents")
-
+ 
     # ── Sleep logs ────────────────────────────────────────────────────────────
     sleep_logs = [
         {
             "user_id": user_id,
             "sleep_start": dt("2026-03-29T23:10:00"),
             "sleep_end": dt("2026-03-30T06:45:00"),
-            "duration_hrs": round(7 + 35 / 60, 2),  # 7.58
+            "duration_hrs": round(7 + 35 / 60, 2),   # 7.58
             "quality": 4,
             "logged_at": dt("2026-03-30T07:00:00"),
             "ai_reaction": {
@@ -244,7 +232,7 @@ def seed_injections():
             "user_id": user_id,
             "sleep_start": dt("2026-03-31T00:30:00"),
             "sleep_end": dt("2026-03-31T06:15:00"),
-            "duration_hrs": round(5 + 45 / 60, 2),  # 5.75
+            "duration_hrs": round(5 + 45 / 60, 2),   # 5.75
             "quality": 2,
             "logged_at": dt("2026-03-31T06:30:00"),
             "ai_reaction": {
@@ -260,7 +248,7 @@ def seed_injections():
             "user_id": user_id,
             "sleep_start": dt("2026-04-01T22:45:00"),
             "sleep_end": dt("2026-04-02T07:00:00"),
-            "duration_hrs": round(8 + 15 / 60, 2),  # 8.25
+            "duration_hrs": round(8 + 15 / 60, 2),   # 8.25
             "quality": 5,
             "logged_at": dt("2026-04-02T07:10:00"),
             "ai_reaction": {
@@ -275,7 +263,7 @@ def seed_injections():
     ]
     result = db.sleep_logs.insert_many(sleep_logs)
     print(f"✓ sleep_logs       → {len(result.inserted_ids)} documents")
-
+ 
     # ── Hydration logs ────────────────────────────────────────────────────────
     hydration_logs = [
         {
@@ -337,7 +325,7 @@ def seed_injections():
     ]
     result = db.hydration_logs.insert_many(hydration_logs)
     print(f"✓ hydration_logs   → {len(result.inserted_ids)} documents")
-
+ 
     # ── Mood logs ─────────────────────────────────────────────────────────────
     mood_logs = [
         {
@@ -385,7 +373,7 @@ def seed_injections():
     ]
     result = db.mood_logs.insert_many(mood_logs)
     print(f"✓ mood_logs        → {len(result.inserted_ids)} documents")
-
+ 
     # ── Wellness insight (on-demand weekly AI analysis) ───────────────────────
     wellness_insight = {
         "user_id": user_id,
@@ -406,7 +394,7 @@ def seed_injections():
     }
     insight_id = db.wellness_insights.insert_one(wellness_insight).inserted_id
     print(f"✓ wellness_insights → _id: {insight_id}")
-
+ 
     # ── Goal plan (extension — AI Goal Coach) ─────────────────────────────────
     goal_plan = {
         "user_id": user_id,
@@ -449,7 +437,7 @@ def seed_injections():
     }
     plan_id = db.goal_plans.insert_one(goal_plan).inserted_id
     print(f"✓ goal_plans       → _id: {plan_id}")
-
+ 
     # ── Chat session (extension — AI Chat Assistant) ───────────────────────────
     chat_session = {
         "user_id": user_id,
@@ -489,17 +477,19 @@ def seed_injections():
     }
     session_id = db.chat_sessions.insert_one(chat_session).inserted_id
     print(f"✓ chat_sessions    → _id: {session_id}")
-
+ 
     print("\nSeed complete. Collections summary:")
     for col in collections:
         print(f"  {col:<22} {db[col].count_documents({})} document(s)")
-
-
+ 
+ 
 # ── Entry point ───────────────────────────────────────────────────────────────
-
+ 
 if __name__ == "__main__":
     app = Flask(__name__)
     db_conn.init_app(app)
-
+ 
     with app.app_context():
         seed_injections()
+ 
+

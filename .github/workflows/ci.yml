@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -16,7 +17,7 @@ jobs:
     name: Lint · Test · Build · Smoke Test · Push
     runs-on: ubuntu-latest
     env:
-      IMAGE_NAMESPACE: ${{ secrets.DOCKERHUB_USERNAME || github.repository_owner }}
+      IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/vitalai
  
     steps:
       # ── Step 1: Checkout ────────────────────────────────────────────────────
@@ -32,29 +33,6 @@ jobs:
             echo "GEMINI_API_KEY secret is missing."
             exit 1
           fi
-
-      # ── Step 2b: Select branch-specific image repo/tags ───────────────────
-      - name: Set image variables
-        run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            TARGET_BRANCH="${{ github.base_ref }}"
-          else
-            TARGET_BRANCH="${{ github.ref_name }}"
-          fi
-
-          if [ "$TARGET_BRANCH" = "main" ]; then
-            IMAGE_REPO="vitalai-main"
-            BRANCH_TAG="main"
-          elif [ "$TARGET_BRANCH" = "Develop" ]; then
-            IMAGE_REPO="vitalai-dev"
-            BRANCH_TAG="dev"
-          else
-            IMAGE_REPO="vitalai-dev"
-            BRANCH_TAG="dev"
-          fi
-
-          echo "IMAGE_NAME=${IMAGE_NAMESPACE}/${IMAGE_REPO}" >> $GITHUB_ENV
-          echo "BRANCH_TAG=${BRANCH_TAG}" >> $GITHUB_ENV
  
       # ── Step 3: Set up Python runtime ───────────────────────────────────────
       - name: Set up Python
@@ -80,9 +58,6 @@ jobs:
       #   DOCKERHUB_USERNAME  – your Docker Hub username
       #   DOCKERHUB_TOKEN     – a Docker Hub access token (not your password)
       - name: Log in to Docker Hub
-        if: |
-          (github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'Develop')) ||
-          (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -90,14 +65,12 @@ jobs:
  
       # ── Step 7: Build Docker image ───────────────────────────────────────────
       # Two tags are applied:
-      #   :<sha>     – immutable, pinned to this exact commit
-      #   :<branch>  – main or dev for quick environment pulls
-      #   :latest    – floating tag per environment image repo
+      #   :ci-<sha>  – immutable, pinned to this exact commit
+      #   :latest    – floating tag, updated on every main push
       - name: Build Docker image
         run: |
           docker build \
             -t $IMAGE_NAME:${{ github.sha }} \
-            -t $IMAGE_NAME:${BRANCH_TAG} \
             -t $IMAGE_NAME:latest \
             .
  
@@ -156,15 +129,12 @@ jobs:
           docker stop test-container
  
       # ── Step 9: Push to Docker Hub ───────────────────────────────────────────
-      # Runs on pushes to main/Develop and PRs from the same repo (fork PRs skip
-      # publish because secrets are not available).
+      # Runs only on direct pushes to main (skipped for pull requests so that
+      # unreviewed code is never published to the registry).
       - name: Push image to Docker Hub
-        if: |
-          (github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'Develop')) ||
-          (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           docker push $IMAGE_NAME:${{ github.sha }}
-          docker push $IMAGE_NAME:${BRANCH_TAG}
           docker push $IMAGE_NAME:latest
       
       # ── Step 10: Lint / static analysis ─────────────────────────────────────
@@ -172,30 +142,6 @@ jobs:
         run: |
           pip install flake8
           # Hard stop on syntax errors only
-          flake8 . --count --select=E9 --show-source --statistics \
-            --exclude .venv,venv,**/site-packages,**/__pycache__
+          flake8 . --count --select=E9 --show-source --statistics
           # Style pass with a generous 120-char line limit
-          flake8 . --count --max-line-length=120 --statistics \
-            --exclude .venv,venv,**/site-packages,**/__pycache__
-  
-  #-- Job 2: Deploy to Render (only on pushes to main/Develop, not on PRs) ───────
-  deploy:
-    name: Deploy to Render
-    runs-on: ubuntu-latest
-    needs: build-and-test          # only runs after job 1 succeeds
-    if: github.event_name == 'push'   # skip on PRs
-
-    steps:
-
-      - name: Trigger Render deploy
-        run: |
-          echo "🚀 Triggering deploy on Render..."
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-             "${{ secrets.RENDER_DEPLOY_URL }}")
-          echo "Render response: $HTTP_STATUS"
-          if [ "$HTTP_STATUS" != "200" ] && [ "$HTTP_STATUS" != "201" ]; then
-            echo "❌ Deploy trigger failed (HTTP $HTTP_STATUS)"
-            exit 1
-          fi
-          echo "✅ Deploy triggered successfully"
-          
+          flake8 . --count --max-line-length=120 --statistics

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up | VitalAI</title>
-    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="/main/application/static/styles.css">
 </head>
 <body>
     <div class="container">
@@ -32,7 +32,7 @@
                 <div class="row">
                     <div class="form-group">
                         <label for="password">Password</label>
-                        <input type="password" id="password" name="password" required placeholder="At least 8 characters">
+                        <input type="password" id="password" name="password" required placeholder="At least 6 characters">
                     </div>
                     
                     <div class="form-group">
@@ -75,7 +75,7 @@
             </form>
             
             <div class="link">
-                Already have an account? <a href="/login">Sign in</a>
+                Already have an account? <a href="/main/application/templates/login.html">Sign in</a>
             </div>
         </div>
     </div>
@@ -99,8 +99,8 @@
             }
             
             // Validate password length
-            if (password.length < 8) {
-                document.getElementById('error-message').textContent = 'Password must be at least 8 characters long.';
+            if (password.length < 6) {
+                document.getElementById('error-message').textContent = '❌ Password must be at least 6 characters long.';
                 document.getElementById('error-message').style.display = 'block';
                 return;
             }
@@ -139,9 +139,12 @@
             
             // Get all form values
             const formData = {
-                display_name: displayName,
+                displayName: displayName,
                 email: email,
-                password: password
+                password: password,
+                calorieTarget: parseInt(document.getElementById('calorieTarget').value) || 2000,
+                hydrationTarget: parseInt(document.getElementById('hydrationTarget').value) || 2500,
+                wellnessGoal: document.getElementById('wellnessGoal').value || null
             };
             
             // Show loading message
@@ -169,11 +172,11 @@
                     
                     // Redirect to dashboard
                     setTimeout(() => {
-                        window.location.href = '/dashboard';
+                        window.location.href = '/dashboard.html';
                     }, 1000);
                 } else {
-                    const errorFields = Array.isArray(data.fields) ? data.fields.join(' | ') : null;
-                    document.getElementById('error-message').textContent = errorFields || data.message || 'Registration failed. Please try again.';
+                    // Show error from backend
+                    document.getElementById('error-message').textContent = data.message || 'Registration failed. Please try again.';
                     document.getElementById('error-message').style.display = 'block';
                     document.getElementById('success-message').style.display = 'none';
                 }

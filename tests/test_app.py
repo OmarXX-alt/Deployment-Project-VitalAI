@@ -1,6 +1,9 @@
-from main.server import create_app
+import os
+import sys
 
-app = create_app("testing")
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from main.server.app import app
 
 
 def test_index_route_returns_html():
@@ -8,9 +11,7 @@ def test_index_route_returns_html():
     response = client.get("/")
 
     assert response.status_code == 200
-    body = response.data.lower()
-    assert b"doctype html" in body
-    assert b"vitalai" in body
+    assert b"<!doctype html>" in response.data
 
 
 def test_health_route_returns_ok():

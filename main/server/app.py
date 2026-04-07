@@ -1,75 +1,45 @@
-import os
-import sys
+from flask import Flask, jsonify
+from main.persistence.database import db
 
-from dotenv import load_dotenv
-from flask import Flask, jsonify, render_template
+app = Flask(__name__)
 
-from main.persistence.extensions import mongo
-from main.server.config import get_config
-from main.server.errors import register_error_handlers
+# Initialize the database connection with the Flask app
+db.init_app(app)
 
 
-def _is_pytest_run() -> bool:
-    return "pytest" in sys.modules or os.getenv("PYTEST_CURRENT_TEST") is not None
+@app.get("/")
+def index():
+    return """
+    <!doctype html>
+    <html lang="en">
+        <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <title>VitalAI</title>
+        </head>
+        <body>
+            <h1>VitalAI</h1>
+            <p>
+                <a href="/health">Health Check</a>
+            </p>
+        </body>
+    </html>
+    """
 
 
-def create_app(config_name=None):
-    load_dotenv()
-    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    app = Flask(
-        __name__,
-        template_folder=os.path.join(base_dir, "application", "templates"),
-        static_folder=os.path.join(base_dir, "application", "static"),
-        static_url_path="/static",
-    )
-
-    config_class = get_config(config_name)
-    app.config.from_object(config_class)
-
-    # Initialize the database connection with the Flask app
-    if app.config.get("INIT_DB", False) and not _is_pytest_run():
-        mongo.init_app(app)
-
-    register_error_handlers(app)
-
-    from main.application.auth import auth_bp
-    from main.application.dashboard import dashboard_bp
-    from main.application.logs import logs_bp
-    from main.application.profile import profile_bp
-
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(profile_bp)
-    app.register_blueprint(logs_bp)
-    app.register_blueprint(dashboard_bp)
-
-    @app.get("/")
-    def index():
-        return render_template("index.html")
-
-    @app.get("/login")
-    def login_page():
-        return render_template("login.html")
-
-    @app.get("/register")
-    def register_page():
-        return render_template("register.html")
-
-    @app.get("/dashboard")
-    def dashboard_page():
-        return render_template("dashboard.html")
-
-    @app.get("/health")
-    def health():
-        return jsonify({"status": "OK"}), 200
-
-    return app
-
-
-# Module-level app instance for gunicorn WSGI
-app = create_app()
-
+@app.get("/health")
+def health():
+    db_status = "OK"
+    try:
+        db.client.admin.command('ping')
+    except Exception:
+        db_status = "Disconnected"
+        
+    return jsonify({
+        "status": "OK",
+        "database": db_status
+    }), 200
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", "5000"))
-    debug = app.config.get("DEBUG", False)
-    app.run(debug=debug, host="0.0.0.0", port=port)
+    app.run(debug=True, host="0.0.0.0", port=5000)
+
