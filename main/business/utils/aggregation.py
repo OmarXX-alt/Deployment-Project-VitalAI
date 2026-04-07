@@ -279,16 +279,28 @@ def _date_key(value: object) -> str | None:
     """Return ISO date key if value is a datetime."""
     if isinstance(value, datetime):
         return value.date().isoformat()
+    if isinstance(value, str):
+        parsed = _parse_iso_datetime(value)
+        if parsed is not None:
+            return parsed.date().isoformat()
     return None
+
+
+def _recent_filter(user_id: str, cutoff: datetime) -> dict:
+    return {
+        "user_id": user_id,
+        "$or": [
+            {"logged_at": {"$gte": cutoff}},
+            {"created_at": {"$gte": cutoff}},
+        ],
+    }
 
 
 def get_meal_context(user_id: str, db) -> dict:
     """Return 7-day meal summary for the given user."""
     try:
         cutoff = datetime.utcnow() - timedelta(days=7)
-        cursor = db["meal_logs"].find(
-            {"user_id": user_id, "created_at": {"$gte": cutoff}}
-        )
+        cursor = db["meal_logs"].find(_recent_filter(user_id, cutoff))
         daily: dict[str, float] = {}
         meal_count = 0
         for doc in cursor:
@@ -297,7 +309,7 @@ def get_meal_context(user_id: str, db) -> dict:
             calories_val = (
                 float(calories) if isinstance(calories, (int, float)) else 0.0
             )
-            day_key = _date_key(doc.get("created_at"))
+            day_key = _date_key(doc.get("logged_at") or doc.get("created_at"))
             if day_key:
                 daily[day_key] = daily.get(day_key, 0.0) + calories_val
         daily_list = list(daily.values())
@@ -317,9 +329,7 @@ def get_workout_context(user_id: str, db) -> dict:
     """Return 7-day workout summary for the given user."""
     try:
         cutoff = datetime.utcnow() - timedelta(days=7)
-        cursor = db["workout_logs"].find(
-            {"user_id": user_id, "created_at": {"$gte": cutoff}}
-        )
+        cursor = db["workout_logs"].find(_recent_filter(user_id, cutoff))
         sessions = 0
         total_minutes = 0
         types: list[str] = []
@@ -344,9 +354,7 @@ def get_sleep_context(user_id: str, db) -> dict:
     """Return 7-day sleep summary for the given user."""
     try:
         cutoff = datetime.utcnow() - timedelta(days=7)
-        cursor = db["sleep_logs"].find(
-            {"user_id": user_id, "created_at": {"$gte": cutoff}}
-        )
+        cursor = db["sleep_logs"].find(_recent_filter(user_id, cutoff))
         entries = 0
         durations: list[float] = []
         qualities: list[float] = []
@@ -376,16 +384,14 @@ def get_hydration_context(user_id: str, db) -> dict:
     """Return 7-day hydration summary for the given user."""
     try:
         cutoff = datetime.utcnow() - timedelta(days=7)
-        cursor = db["hydration_logs"].find(
-            {"user_id": user_id, "created_at": {"$gte": cutoff}}
-        )
+        cursor = db["hydration_logs"].find(_recent_filter(user_id, cutoff))
         daily: dict[str, float] = {}
         for doc in cursor:
             amount = doc.get("amount_ml")
             amount_val = (
                 float(amount) if isinstance(amount, (int, float)) else 0.0
             )
-            day_key = _date_key(doc.get("created_at"))
+            day_key = _date_key(doc.get("logged_at") or doc.get("created_at"))
             if day_key:
                 daily[day_key] = daily.get(day_key, 0.0) + amount_val
         daily_list = list(daily.values())
@@ -415,9 +421,7 @@ def get_mood_context(user_id: str, db) -> dict:
     """Return 7-day mood summary for the given user."""
     try:
         cutoff = datetime.utcnow() - timedelta(days=7)
-        cursor = db["mood_logs"].find(
-            {"user_id": user_id, "created_at": {"$gte": cutoff}}
-        )
+        cursor = db["mood_logs"].find(_recent_filter(user_id, cutoff))
         scores: list[float] = []
         entries = 0
         for doc in cursor:
