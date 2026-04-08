@@ -4,53 +4,97 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VitalAI | Home</title>
-    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
-<body>
-    <div class="landing-hero">
-        <h1>VitalAI</h1>
-        <p class="landing-tagline">Your AI-powered health & wellness tracker</p>
-        <div class="landing-buttons">
-            <a href="/login"><button class="btn-login">Log In</button></a>
-            <a href="/register"><button class="btn-signup">Sign Up</button></a>
-        </div>
-    </div>
+<body class="landing-body">
+    <header class="landing-header">
+        <span class="landing-eyebrow">VitalAI</span>
+        <h1 class="landing-title">VitalAI</h1>
+        <p class="landing-tagline">
+            A reactive health hub that reads the last 7 days of your life and
+            answers with clarity.
+        </p>
+    </header>
 
-    <div class="features-grid">
-        <div class="feature-card">
-            <div class="feature-icon">🍽️</div>
-            <h3>Smart Meal Tracking</h3>
-            <p>Log calories and get AI nutrition insights</p>
+    <section class="landing-orbit" aria-label="VitalAI features">
+        <div class="core-card">
+            <div class="core-mark">V</div>
+            <h2>VitalAI</h2>
+            <p>Log. Reflect. React. Get instant AI coaching.</p>
+            <div class="landing-buttons">
+                <a href="/login"><button class="btn-login">Log In</button></a>
+                <a href="/register"><button class="btn-signup">Sign Up</button></a>
+            </div>
+            <span class="core-note">Tap any module to expand.</span>
         </div>
-        <div class="feature-card">
-            <div class="feature-icon">💪</div>
-            <h3>Workout Intelligence</h3>
-            <p>Track exercises and recovery advice</p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon">😴</div>
-            <h3>Sleep Analytics</h3>
-            <p>Monitor sleep quality and patterns</p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon">💧</div>
-            <h3>Hydration Coach</h3>
-            <p>Stay on top of daily water intake</p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon">😊</div>
-            <h3>Mood Check-in</h3>
-            <p>Track emotional wellness over time</p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon">🤖</div>
-            <h3>AI Insights</h3>
-            <p>Personalized health recommendations</p>
-        </div>
-    </div>
 
-    <div class="landing-footer">
+        <div class="orbit">
+            <article class="orbit-item item-1" role="button" tabindex="0">
+                <div class="orbit-item-inner">
+                    <div class="orbit-item-content">
+                        <span class="orbit-icon">🍽️</span>
+                        <h3>Meals</h3>
+                        <p>Calorie patterns + AI nudges to stay on track.</p>
+                        <span class="orbit-meta">Macros, streaks, smart swaps</span>
+                    </div>
+                </div>
+            </article>
+            <article class="orbit-item item-2" role="button" tabindex="0">
+                <div class="orbit-item-inner">
+                    <div class="orbit-item-content">
+                        <span class="orbit-icon">💪</span>
+                        <h3>Workouts</h3>
+                        <p>Intensity trends and recovery-aware guidance.</p>
+                        <span class="orbit-meta">Volume, balance, next-day tips</span>
+                    </div>
+                </div>
+            </article>
+            <article class="orbit-item item-3" role="button" tabindex="0">
+                <div class="orbit-item-inner">
+                    <div class="orbit-item-content">
+                        <span class="orbit-icon">😴</span>
+                        <h3>Sleep</h3>
+                        <p>Duration, quality, and nightly rhythm insights.</p>
+                        <span class="orbit-meta">Debt, consistency, recovery</span>
+                    </div>
+                </div>
+            </article>
+            <article class="orbit-item item-4" role="button" tabindex="0">
+                <div class="orbit-item-inner">
+                    <div class="orbit-item-content">
+                        <span class="orbit-icon">💧</span>
+                        <h3>Hydration</h3>
+                        <p>Daily goals with context-aware reminders.</p>
+                        <span class="orbit-meta">Goal pacing, workout impact</span>
+                    </div>
+                </div>
+            </article>
+            <article class="orbit-item item-5" role="button" tabindex="0">
+                <div class="orbit-item-inner">
+                    <div class="orbit-item-content">
+                        <span class="orbit-icon">😊</span>
+                        <h3>Mood</h3>
+                        <p>Emotion tracking mapped to habits and sleep.</p>
+                        <span class="orbit-meta">Triggers, lifts, gentle nudges</span>
+                    </div>
+                </div>
+            </article>
+            <article class="orbit-item item-6" role="button" tabindex="0">
+                <div class="orbit-item-inner">
+                    <div class="orbit-item-content">
+                        <span class="orbit-icon">🤖</span>
+                        <h3>AI Insights</h3>
+                        <p>Weekly highlights and actionable next steps.</p>
+                        <span class="orbit-meta">2 positives, 1 focus, 3 ideas</span>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <footer class="landing-footer">
         <p>© 2026 VitalAI — Smarter health tracking with artificial intelligence</p>
-    </div>
+    </footer>
+
 </body>
 </html>
