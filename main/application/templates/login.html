@@ -93,6 +93,7 @@
             // REAL API CALL to backend
             fetch('/api/login', {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
                     'Content-Type': 'application/json'
                 },
@@ -100,10 +101,7 @@
             })
             .then(response => response.json().then(data => ({ response, data })))
             .then(({ response, data }) => {
-                if (data.token) {
-                    // Store token in localStorage
-                    localStorage.setItem('token', data.token);
-                    
+                if (response.ok) {
                     // Show success message
                     document.getElementById('success-message').textContent = '✓ Login successful! Redirecting to dashboard...';
                     

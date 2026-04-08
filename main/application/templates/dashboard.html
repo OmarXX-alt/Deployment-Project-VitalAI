@@ -120,11 +120,7 @@
     </div>
 
     <script>
-        // Get token from localStorage
-        const token = localStorage.getItem('token');
-
-        // Check if user is logged in
-        if (!token) {
+        function redirectToLogin() {
             window.location.href = '/login';
         }
 
@@ -135,24 +131,38 @@
 
         // Logout function
         function logout() {
-            localStorage.removeItem('token');
-            window.location.href = '/login';
+            fetch('/api/logout', {
+                method: 'POST',
+                credentials: 'same-origin'
+            })
+            .finally(() => {
+                redirectToLogin();
+            });
         }
 
         // User Profile Data Fetch
         fetch('/api/profile', {
-            headers: { 'Authorization': 'Bearer ' + token }
+            credentials: 'same-origin'
         })
-        .then(response => response.json())
+        .then(response => {
+            if (response.status === 401) {
+                redirectToLogin();
+                return null;
+            }
+            return response.json();
+        })
         .then(data => {
+            if (!data) {
+                return;
+            }
             if (data.display_name) {
                 document.getElementById('user-name').textContent = data.display_name;
             }
             if (data.wellness_goal) {
                 document.getElementById('user-goal').textContent = data.wellness_goal.replace('_', ' ');
             }
-            if (data.calorie_target) {
-                document.getElementById('user-diet').textContent = data.calorie_target;
+            if (data.daily_calorie_target) {
+                document.getElementById('user-diet').textContent = data.daily_calorie_target;
             }
         })
         .catch(err => console.error("Error fetching profile:", err));
@@ -211,7 +221,7 @@
         // Update charts with real data
         function updateCharts() {
             fetch('/api/dashboard', {
-                headers: { 'Authorization': 'Bearer ' + token }
+                credentials: 'same-origin'
             })
             .then(response => response.json())
             .then(data => {
@@ -287,9 +297,9 @@
 
             fetch('/api/logs/meal', {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(data)
             })
@@ -327,9 +337,9 @@
 
             fetch('/api/logs/workout', {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(data)
             })
@@ -366,9 +376,9 @@
 
             fetch('/api/logs/sleep', {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(data)
             })
@@ -397,9 +407,9 @@
 
             fetch('/api/logs/hydration', {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(data)
             })
@@ -428,9 +438,9 @@
 
             fetch('/api/logs/mood', {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(data)
             })
@@ -452,7 +462,7 @@
         function getWeeklyInsight() {
             showAI('weekly-insight', '⏳ Generating insight...');
             fetch('/api/insights/weekly', {
-                headers: { 'Authorization': 'Bearer ' + token }
+                credentials: 'same-origin'
             })
             .then(response => response.json())
             .then(data => {
@@ -521,9 +531,9 @@
 
             fetch('/api/chat', {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(payload)
             })

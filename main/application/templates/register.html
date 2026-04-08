@@ -182,19 +182,15 @@
             // REAL API CALL to backend
             fetch('/api/register', {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(formData)
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.token || data.success) {
-                    // Store token if returned
-                    if (data.token) {
-                        localStorage.setItem('token', data.token);
-                    }
-                    
+            .then(response => response.json().then(data => ({ response, data })))
+            .then(({ response, data }) => {
+                if (response.ok) {
                     // Show success message
                     document.getElementById('success-message').textContent = '✓ Account created successfully! Redirecting to dashboard...';
                     
