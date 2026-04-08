@@ -2,7 +2,8 @@
 <html>
 <head>
     <title>VitalAI - Dashboard</title>
-    <link rel="stylesheet" href="/main/application/static/styles.css">
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="dashboard-container">
@@ -11,60 +12,85 @@
             <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
 
-        <!-- MEAL LOGGER -->
-        <div class="card">
-            <h3>🍽️ Log Meal</h3>
-            <input type="text" id="meal-food" placeholder="Food item">
-            <input type="number" id="meal-cals" placeholder="Calories" min="0">
-            <input type="number" id="meal-protein" placeholder="Protein (g)" min="0">
-            <button onclick="logMeal()">Save Meal</button>
-            <div id="meal-ai" class="ai-response hidden"></div>
+        <!-- CHARTS SECTION -->
+        <div class="charts-container">
+            <div class="chart-card">
+                <h3>📊 Weekly Calories</h3>
+                <canvas id="caloriesChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>😴 Weekly Sleep</h3>
+                <canvas id="sleepChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>💪 Weekly Workouts</h3>
+                <canvas id="workoutsChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>💧 Weekly Hydration</h3>
+                <canvas id="hydrationChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>😊 Weekly Mood</h3>
+                <canvas id="moodChart"></canvas>
+            </div>
         </div>
 
-        <!-- WORKOUT LOGGER -->
-        <div class="card">
-            <h3>💪 Log Workout</h3>
-            <input type="text" id="workout-type" placeholder="Exercise (e.g., Running)">
-            <input type="number" id="workout-duration" placeholder="Minutes" min="0" max="1440">
-            <select id="workout-intensity">
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-            </select>
-            <button onclick="logWorkout()">Save Workout</button>
-            <div id="workout-ai" class="ai-response hidden"></div>
-        </div>
+        <!-- LOG FORMS SECTION -->
+        <div class="log-section">
+            <h3>Log Your Health Data</h3>
+            <div class="log-grid">
+                <div class="log-card">
+                    <h4>🍽️ Log Meal</h4>
+                    <input type="text" id="meal-food" placeholder="Food item">
+                    <input type="number" id="meal-cals" placeholder="Calories" min="0">
+                    <input type="number" id="meal-protein" placeholder="Protein (g)" min="0">
+                    <button onclick="logMeal()">Save Meal</button>
+                    <div id="meal-ai" class="ai-response hidden"></div>
+                </div>
 
-        <!-- SLEEP LOGGER -->
-        <div class="card">
-            <h3>😴 Log Sleep</h3>
-            <input type="number" id="sleep-hours" placeholder="Hours slept" step="0.5" min="0" max="24">
-            <select id="sleep-quality">
-                <option value="poor">Poor</option>
-                <option value="fair">Fair</option>
-                <option value="good">Good</option>
-                <option value="excellent">Excellent</option>
-            </select>
-            <button onclick="logSleep()">Save Sleep</button>
-            <div id="sleep-ai" class="ai-response hidden"></div>
-        </div>
+                <div class="log-card">
+                    <h4>💪 Log Workout</h4>
+                    <input type="text" id="workout-type" placeholder="Exercise">
+                    <input type="number" id="workout-duration" placeholder="Minutes" min="0">
+                    <select id="workout-intensity">
+                        <option value="low">Low</option>
+                        <option value="moderate">Moderate</option>
+                        <option value="high">High</option>
+                    </select>
+                    <button onclick="logWorkout()">Save Workout</button>
+                    <div id="workout-ai" class="ai-response hidden"></div>
+                </div>
 
-        <!-- HYDRATION LOGGER -->
-        <div class="card">
-            <h3>💧 Log Hydration</h3>
-            <input type="number" id="water-ml" placeholder="ml consumed" min="0">
-            <button onclick="logWater()">Add Water</button>
-            <div id="water-ai" class="ai-response hidden"></div>
-        </div>
+                <div class="log-card">
+                    <h4>😴 Log Sleep</h4>
+                    <input type="number" id="sleep-hours" placeholder="Hours slept" step="0.5" min="0" max="24">
+                    <select id="sleep-quality">
+                        <option value="poor">Poor</option>
+                        <option value="fair">Fair</option>
+                        <option value="good">Good</option>
+                        <option value="excellent">Excellent</option>
+                    </select>
+                    <button onclick="logSleep()">Save Sleep</button>
+                    <div id="sleep-ai" class="ai-response hidden"></div>
+                </div>
 
-        <!-- MOOD LOGGER -->
-        <div class="card">
-            <h3>😊 Mood Check-in</h3>
-            <input type="range" id="mood-rating" min="1" max="10" value="5">
-            <span id="mood-value">5</span>/10
-            <input type="text" id="mood-notes" placeholder="How are you feeling?">
-            <button onclick="logMood()">Save Mood</button>
-            <div id="mood-ai" class="ai-response hidden"></div>
+                <div class="log-card">
+                    <h4>💧 Log Hydration</h4>
+                    <input type="number" id="water-ml" placeholder="ml consumed" min="0">
+                    <button onclick="logWater()">Add Water</button>
+                    <div id="water-ai" class="ai-response hidden"></div>
+                </div>
+
+                <div class="log-card">
+                    <h4>😊 Mood Check-in</h4>
+                    <input type="range" id="mood-rating" min="1" max="10" value="5">
+                    <span id="mood-value">5</span>/10
+                    <input type="text" id="mood-notes" placeholder="How are you feeling?">
+                    <button onclick="logMood()">Save Mood</button>
+                    <div id="mood-ai" class="ai-response hidden"></div>
+                </div>
+            </div>
         </div>
 
         <!-- WEEKLY INSIGHT BUTTON -->
@@ -73,38 +99,38 @@
             <button onclick="getWeeklyInsight()">Get My AI Insight</button>
             <div id="weekly-insight" class="ai-response hidden"></div>
         </div>
+
+        <!-- CHAT ASSISTANT -->
+        <div class="card chat-card">
+            <h3>🤖 VitalAI Chat</h3>
+            <div class="chat-thread" id="chat-thread"></div>
+            <div class="chat-input-row">
+                <input type="text" id="chat-input" placeholder="Ask about your week...">
+                <button class="chat-send" onclick="sendChat()">Send</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        // Get token from localStorage (set after login)
         const token = localStorage.getItem('token');
+        if (!token) window.location.href = '/login';
 
-        // Check if user is logged in
-        if (!token) {
-            window.location.href = '/login';
-        }
-
-        // Mood slider display
         document.getElementById('mood-rating').oninput = function() {
             document.getElementById('mood-value').textContent = this.value;
         };
 
-        // Logout function
         function logout() {
             localStorage.removeItem('token');
             window.location.href = '/login';
         }
 
-        // ========== AI REACTION WITH SKELETON LOADER (Issue #22) ==========
-        
+        // ========== YOUR SKELETON LOADER FUNCTIONS ==========
         function showAILoader(elementId) {
             const el = document.getElementById(elementId);
             el.innerHTML = '<div class="skeleton-loader">🤖 AI is analyzing your data...</div>';
             el.classList.remove('hidden');
-    
-            // Safety timeout - hide loader after 3 seconds if no response
             setTimeout(() => {
-                if (el.innerHTML.includes('skeleton-loader')) {
+                if (el.innerHTML && el.innerHTML.includes('skeleton-loader')) {
                     el.innerHTML = '⚠️ AI service unavailable. Please try again.';
                     setTimeout(() => el.classList.add('hidden'), 3000);
                 }
@@ -115,175 +141,182 @@
             const el = document.getElementById(elementId);
             el.innerHTML = message;
             el.classList.remove('hidden');
-            // Auto-hide after 5 seconds
-            setTimeout(() => {
-                el.classList.add('hidden');
-            }, 5000);
+            setTimeout(() => el.classList.add('hidden'), 5000);
         }
 
         function showAIError(elementId, message) {
             const el = document.getElementById(elementId);
             el.innerHTML = message;
             el.classList.remove('hidden');
-            setTimeout(() => {
-                el.classList.add('hidden');
-            }, 5000);
+            setTimeout(() => el.classList.add('hidden'), 5000);
         }
 
-        // ========== LOGGING FUNCTIONS WITH SKELETON LOADER ==========
-        
+        // ========== CHART FUNCTIONS (Teammate's code) ==========
+        let caloriesChart, sleepChart, workoutsChart, hydrationChart, moodChart;
+
+        function initCharts() {
+            caloriesChart = new Chart(document.getElementById('caloriesChart'), {
+                type: 'line',
+                data: { labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], datasets: [{ label: 'Calories', data: [0,0,0,0,0,0,0], borderColor: '#7e57c2' }] }
+            });
+            sleepChart = new Chart(document.getElementById('sleepChart'), {
+                type: 'bar',
+                data: { labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], datasets: [{ label: 'Hours Slept', data: [0,0,0,0,0,0,0], backgroundColor: '#7e57c2' }] }
+            });
+            workoutsChart = new Chart(document.getElementById('workoutsChart'), {
+                type: 'bar',
+                data: { labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], datasets: [{ label: 'Workout (min)', data: [0,0,0,0,0,0,0], backgroundColor: '#b39ddb' }] }
+            });
+            hydrationChart = new Chart(document.getElementById('hydrationChart'), {
+                type: 'line',
+                data: { labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], datasets: [{ label: 'Water (ml)', data: [0,0,0,0,0,0,0], borderColor: '#2196f3' }] }
+            });
+            moodChart = new Chart(document.getElementById('moodChart'), {
+                type: 'line',
+                data: { labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], datasets: [{ label: 'Mood (1-10)', data: [0,0,0,0,0,0,0], borderColor: '#6a1b9a' }] }
+            });
+        }
+
+        function updateCharts() {
+            fetch('/api/dashboard', { headers: { 'Authorization': 'Bearer ' + token } })
+                .then(res => res.json())
+                .then(data => {
+                    const labels = (data.calories_7d || []).map(p => p.date);
+                    caloriesChart.data.labels = labels;
+                    caloriesChart.data.datasets[0].data = (data.calories_7d || []).map(p => p.kcal);
+                    sleepChart.data.datasets[0].data = (data.sleep_duration_7d || []).map(p => p.hours);
+                    workoutsChart.data.datasets[0].data = (data.workout_count_7d || []).map(p => p.count);
+                    hydrationChart.data.datasets[0].data = (data.hydration_7d || []).map(p => p.ml);
+                    moodChart.data.datasets[0].data = (data.mood_7d || []).map(p => p.score);
+                    [caloriesChart, sleepChart, workoutsChart, hydrationChart, moodChart].forEach(c => c.update());
+                });
+        }
+
+        // ========== LOGGING FUNCTIONS (MERGED - uses your skeleton loader + teammate's API endpoints) ==========
         function logMeal() {
-            const data = {
-                food: document.getElementById('meal-food').value,
-                calories: parseInt(document.getElementById('meal-cals').value),
-                protein: parseInt(document.getElementById('meal-protein').value)
-            };
-            
-            // Show skeleton loader immediately
+            const data = { meal_name: document.getElementById('meal-food').value, calories: parseInt(document.getElementById('meal-cals').value), meal_type: 'lunch' };
             showAILoader('meal-ai');
-            
-            fetch('/api/meals', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
-                },
+            fetch('/api/logs/meal', {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                 body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(data => {
-                showAIResponse('meal-ai', data.reaction || '✅ Meal logged!');
-                clearMealForm();
-            })
-            .catch(error => showAIError('meal-ai', '❌ Error logging meal'));
+            }).then(res => res.json()).then(data => {
+                showAIResponse('meal-ai', data.reaction?.message || '✅ Meal logged!');
+                updateCharts();
+                document.getElementById('meal-food').value = ''; document.getElementById('meal-cals').value = ''; document.getElementById('meal-protein').value = '';
+            }).catch(() => showAIError('meal-ai', '❌ Error logging meal'));
         }
 
         function logWorkout() {
-            const data = {
-                type: document.getElementById('workout-type').value,
-                duration: parseInt(document.getElementById('workout-duration').value),
-                intensity: document.getElementById('workout-intensity').value
-            };
-            
+            const data = { exercise_type: document.getElementById('workout-type').value, duration_minutes: parseInt(document.getElementById('workout-duration').value), intensity: document.getElementById('workout-intensity').value };
             showAILoader('workout-ai');
-            
-            fetch('/api/workouts', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
-                },
+            fetch('/api/logs/workout', {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                 body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(data => {
-                showAIResponse('workout-ai', data.reaction || '💪 Workout logged!');
-                clearWorkoutForm();
-            })
-            .catch(error => showAIError('workout-ai', '❌ Error logging workout'));
+            }).then(res => res.json()).then(data => {
+                showAIResponse('workout-ai', data.reaction?.message || '💪 Workout logged!');
+                updateCharts();
+                document.getElementById('workout-type').value = ''; document.getElementById('workout-duration').value = '';
+            }).catch(() => showAIError('workout-ai', '❌ Error logging workout'));
         }
 
         function logSleep() {
-            const data = {
-                hours: parseFloat(document.getElementById('sleep-hours').value),
-                quality: document.getElementById('sleep-quality').value
-            };
-            
+            const qualityMap = { poor: 1, fair: 2, good: 4, excellent: 5 };
+            const hours = parseFloat(document.getElementById('sleep-hours').value);
+            const now = new Date();
+            const data = { sleep_start: new Date(now.getTime() - hours * 60 * 60 * 1000).toISOString(), sleep_end: now.toISOString(), quality_score: qualityMap[document.getElementById('sleep-quality').value] || 3 };
             showAILoader('sleep-ai');
-            
-            fetch('/api/sleep', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
-                },
+            fetch('/api/logs/sleep', {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                 body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(data => {
-                showAIResponse('sleep-ai', data.reaction || '😴 Sleep logged!');
-                clearSleepForm();
-            })
-            .catch(error => showAIError('sleep-ai', '❌ Error logging sleep'));
+            }).then(res => res.json()).then(data => {
+                showAIResponse('sleep-ai', data.reaction?.message || '😴 Sleep logged!');
+                updateCharts();
+                document.getElementById('sleep-hours').value = '';
+            }).catch(() => showAIError('sleep-ai', '❌ Error logging sleep'));
         }
 
         function logWater() {
-            const data = {
-                ml: parseInt(document.getElementById('water-ml').value)
-            };
-            
+            const data = { amount_ml: parseInt(document.getElementById('water-ml').value) };
             showAILoader('water-ai');
-            
-            fetch('/api/hydration', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
-                },
+            fetch('/api/logs/hydration', {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                 body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(data => {
-                showAIResponse('water-ai', data.reaction || '💧 Water logged!');
+            }).then(res => res.json()).then(data => {
+                showAIResponse('water-ai', data.reaction?.message || '💧 Water logged!');
+                updateCharts();
                 document.getElementById('water-ml').value = '';
-            })
-            .catch(error => showAIError('water-ai', '❌ Error logging water'));
+            }).catch(() => showAIError('water-ai', '❌ Error logging water'));
         }
 
         function logMood() {
-            const data = {
-                rating: parseInt(document.getElementById('mood-rating').value),
-                notes: document.getElementById('mood-notes').value
-            };
-            
+            const sliderValue = parseInt(document.getElementById('mood-rating').value);
+            const data = { mood_score: Math.min(5, Math.max(1, Math.ceil(sliderValue / 2))), note: document.getElementById('mood-notes').value };
             showAILoader('mood-ai');
-            
-            fetch('/api/moods', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
-                },
+            fetch('/api/logs/mood', {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                 body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(data => {
-                showAIResponse('mood-ai', data.reaction || '😊 Mood logged!');
+            }).then(res => res.json()).then(data => {
+                showAIResponse('mood-ai', data.reaction?.message || '😊 Mood logged!');
+                updateCharts();
                 document.getElementById('mood-notes').value = '';
-            })
-            .catch(error => showAIError('mood-ai', '❌ Error logging mood'));
+            }).catch(() => showAIError('mood-ai', '❌ Error logging mood'));
         }
 
         function getWeeklyInsight() {
             showAILoader('weekly-insight');
-            
-            fetch('/api/insights/weekly', {
-                headers: { 'Authorization': 'Bearer ' + token }
-            })
-            .then(response => response.json())
-            .then(data => {
-                showAIResponse('weekly-insight', data.insight || 'No insights yet. Keep logging!');
-            })
-            .catch(error => showAIError('weekly-insight', '❌ Error getting insights'));
+            fetch('/api/insights/weekly', { headers: { 'Authorization': 'Bearer ' + token } })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error === 'insight_unavailable') {
+                        showAIResponse('weekly-insight', 'No insights yet. Keep logging!');
+                        return;
+                    }
+                    const positives = (data.positives || []).join(' • ');
+                    const suggestions = (data.suggestions || []).join(' • ');
+                    const message = `✨ Positives: ${positives}\n\n⚠️ Concern: ${data.concern || 'None'}\n\n💡 Suggestions: ${suggestions}`;
+                    showAIResponse('weekly-insight', message);
+                }).catch(() => showAIError('weekly-insight', '❌ Error getting insights'));
         }
 
-        // Helper functions to clear forms
-        function clearMealForm() {
-            document.getElementById('meal-food').value = '';
-            document.getElementById('meal-cals').value = '';
-            document.getElementById('meal-protein').value = '';
+        // ========== CHAT FUNCTIONS ==========
+        function appendChatMessage(role, message) {
+            const thread = document.getElementById('chat-thread');
+            const bubble = document.createElement('div');
+            bubble.className = `chat-message ${role === 'user' ? 'chat-user' : 'chat-assistant'}`;
+            bubble.textContent = message;
+            thread.appendChild(bubble);
+            thread.scrollTop = thread.scrollHeight;
+            return bubble;
         }
 
-        function clearWorkoutForm() {
-            document.getElementById('workout-type').value = '';
-            document.getElementById('workout-duration').value = '';
-            document.getElementById('workout-intensity').value = 'low';
+        function sendChat() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+            appendChatMessage('user', message);
+            const pending = appendChatMessage('assistant', 'Thinking...');
+            pending.classList.add('chat-pending');
+            input.value = '';
+            const payload = { message };
+            const sessionId = localStorage.getItem('chat_session_id');
+            if (sessionId) payload.session_id = sessionId;
+            fetch('/api/chat', {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify(payload)
+            }).then(res => res.json()).then(data => {
+                pending.textContent = data.reply || "Sorry, I'm having trouble.";
+                pending.classList.remove('chat-pending');
+                if (data.session_id) localStorage.setItem('chat_session_id', data.session_id);
+            }).catch(() => {
+                pending.textContent = "Sorry, I'm having trouble connecting.";
+                pending.classList.remove('chat-pending');
+            });
         }
 
-        function clearSleepForm() {
-            document.getElementById('sleep-hours').value = '';
-            document.getElementById('sleep-quality').value = 'poor';
-        }
+        document.getElementById('chat-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') sendChat(); });
+
+        initCharts();
+        updateCharts();
     </script>
 </body>
 </html>
