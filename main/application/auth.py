@@ -62,6 +62,9 @@ def register():
         validated["password"],
         current_app.config.get("JWT_SECRET"),
         current_app.config.get("JWT_EXPIRY_HOURS", 24),
+        daily_calorie_target=validated.get("daily_calorie_target"),
+        hydration_goal=validated.get("hydration_goal"),
+        wellness_goal=validated.get("wellness_goal"),
     )
     token = response_body.get("token") if isinstance(response_body, dict) else None
     if status in {200, 201} and token:

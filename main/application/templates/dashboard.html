@@ -10,7 +10,11 @@
         <div class="dashboard-header">
             <div>
                 <h2>Hello, <span id="user-name">Resident</span></h2>
-                <p class="user-info">Goal: <span id="user-goal" style="text-transform: capitalize;">General Health</span> • <span id="user-diet">N/A</span> kcal max</p>
+                <p class="user-info">
+                    Goal: <span id="user-goal" style="text-transform: capitalize;">Not set</span> •
+                    <span id="user-diet">N/A</span> kcal max •
+                    <span id="user-hydration">N/A</span> ml hydration
+                </p>
             </div>
             <button class="logout-btn" onclick="logout()">Sign Out</button>
         </div>
@@ -58,6 +62,7 @@
                     <h4>💪 Log Workout</h4>
                     <input type="text" id="workout-type" placeholder="Exercise">
                     <input type="number" id="workout-duration" placeholder="Minutes" min="0">
+                    <label for="workout-intensity">Intensity</label>
                     <select id="workout-intensity">
                         <option value="low">Low</option>
                         <option value="moderate">Moderate</option>
@@ -71,6 +76,7 @@
                 <div class="log-card">
                     <h4>😴 Log Sleep</h4>
                     <input type="number" id="sleep-hours" placeholder="Hours slept" step="0.5" min="0" max="24">
+                    <label for="sleep-quality">Sleep quality</label>
                     <select id="sleep-quality">
                         <option value="poor">Poor</option>
                         <option value="fair">Fair</option>
@@ -140,6 +146,15 @@
             });
         }
 
+        function formatGoal(goal) {
+            if (!goal || typeof goal !== 'string') {
+                return 'Not set';
+            }
+            return goal
+                .replace(/_/g, ' ')
+                .replace(/\b\w/g, (char) => char.toUpperCase());
+        }
+
         // User Profile Data Fetch
         fetch('/api/profile', {
             credentials: 'same-origin'
@@ -158,12 +173,15 @@
             if (data.display_name) {
                 document.getElementById('user-name').textContent = data.display_name;
             }
-            if (data.wellness_goal) {
-                document.getElementById('user-goal').textContent = data.wellness_goal.replace('_', ' ');
-            }
-            if (data.daily_calorie_target) {
-                document.getElementById('user-diet').textContent = data.daily_calorie_target;
-            }
+            document.getElementById('user-goal').textContent = formatGoal(data.wellness_goal);
+            const kcalTarget = Number(data.daily_calorie_target);
+            document.getElementById('user-diet').textContent = Number.isFinite(kcalTarget)
+                ? kcalTarget
+                : 'N/A';
+            const hydrationTarget = Number(data.hydration_goal);
+            document.getElementById('user-hydration').textContent = Number.isFinite(hydrationTarget)
+                ? hydrationTarget
+                : 'N/A';
         })
         .catch(err => console.error("Error fetching profile:", err));
 

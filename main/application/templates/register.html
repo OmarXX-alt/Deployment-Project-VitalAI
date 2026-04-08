@@ -172,7 +172,10 @@
             const formData = {
                 display_name: displayName,
                 email: email,
-                password: password
+                password: password,
+                daily_calorie_target: document.getElementById('calorieTarget').value || null,
+                hydration_goal: document.getElementById('hydrationTarget').value || null,
+                wellness_goal: document.getElementById('wellnessGoal').value || null
             };
             
             // Show loading message
