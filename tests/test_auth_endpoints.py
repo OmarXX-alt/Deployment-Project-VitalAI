@@ -31,8 +31,15 @@ def test_register_success(client, monkeypatch):
 
     assert response.status_code == 201
     data = response.get_json()
-    assert data["token"] == "test-token"
     assert data["display_name"] == "Alex"
+    assert "token" not in data
+    cookie_headers = response.headers.getlist("Set-Cookie")
+    auth_cookie = next(
+        (header for header in cookie_headers if "vitalai_auth" in header),
+        None,
+    )
+    assert auth_cookie is not None
+    assert "HttpOnly" in auth_cookie
 
 
 def test_register_validation_error(client):
@@ -59,8 +66,15 @@ def test_login_success(client, monkeypatch):
 
     assert response.status_code == 200
     data = response.get_json()
-    assert data["token"] == "login-token"
     assert data["display_name"] == "Alex"
+    assert "token" not in data
+    cookie_headers = response.headers.getlist("Set-Cookie")
+    auth_cookie = next(
+        (header for header in cookie_headers if "vitalai_auth" in header),
+        None,
+    )
+    assert auth_cookie is not None
+    assert "HttpOnly" in auth_cookie
 
 
 def test_login_invalid_json(client):
