@@ -4,9 +4,21 @@ from main.application import auth as auth_module
 
 
 def test_register_success(client, monkeypatch):
+    captured = {}
+
     def fake_register_user(
-        display_name, email, password, jwt_secret, jwt_expiry_hours
+        display_name,
+        email,
+        password,
+        jwt_secret,
+        jwt_expiry_hours,
+        daily_calorie_target=None,
+        hydration_goal=None,
+        wellness_goal=None,
     ):
+        captured["daily_calorie_target"] = daily_calorie_target
+        captured["hydration_goal"] = hydration_goal
+        captured["wellness_goal"] = wellness_goal
         return (
             {
                 "token": "test-token",
@@ -26,6 +38,9 @@ def test_register_success(client, monkeypatch):
             "display_name": "Alex",
             "email": "alex@example.com",
             "password": "password1!",
+            "daily_calorie_target": 2200,
+            "hydration_goal": 2500,
+            "wellness_goal": "better_sleep",
         },
     )
 
@@ -40,6 +55,9 @@ def test_register_success(client, monkeypatch):
     )
     assert auth_cookie is not None
     assert "HttpOnly" in auth_cookie
+    assert captured["daily_calorie_target"] == 2200
+    assert captured["hydration_goal"] == 2500
+    assert captured["wellness_goal"] == "better_sleep"
 
 
 def test_register_validation_error(client):
