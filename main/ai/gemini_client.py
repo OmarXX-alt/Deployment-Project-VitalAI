@@ -14,7 +14,7 @@ SYSTEM_INSTRUCTION = (
 
 
 def call_gemini(prompt: str, timeout: int = 60) -> str | None:
-    """Send a single prompt to Gemini 2.5 Flash."""
+    """Send a single prompt to Gemini 2.5 Flash Lite."""
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         logger.warning("GEMINI_API_KEY is missing.")
@@ -31,7 +31,7 @@ def call_gemini(prompt: str, timeout: int = 60) -> str | None:
 
         if genai is not None:
             genai.configure(api_key=api_key)
-            model = genai.GenerativeModel("gemini-2.5-flash")
+            model = genai.GenerativeModel("gemini-2.5-flash-lite")
             response = model.generate_content(
                 prompt,
                 request_options={"timeout": timeout},
@@ -43,7 +43,7 @@ def call_gemini(prompt: str, timeout: int = 60) -> str | None:
 
         url = (
             "https://generativelanguage.googleapis.com/"
-            "v1beta/models/gemini-2.5-flash:generateContent"
+            "v1beta/models/gemini-2.5-flash-lite:generateContent"
         )
         payload = {"contents": [{"parts": [{"text": prompt}]}]}
         response = requests.post(
