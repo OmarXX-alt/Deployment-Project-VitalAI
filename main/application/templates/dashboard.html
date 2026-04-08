@@ -2,14 +2,17 @@
 <html>
 <head>
     <title>VitalAI - Dashboard</title>
-    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body>
+<body class="landing-body">
     <div class="dashboard-container">
         <div class="dashboard-header">
-            <h2>VitalAI Dashboard</h2>
-            <button class="logout-btn" onclick="logout()">Logout</button>
+            <div>
+                <h2>Hello, <span id="user-name">Resident</span></h2>
+                <p class="user-info">Goal: <span id="user-goal" style="text-transform: capitalize;">General Health</span> • <span id="user-diet">N/A</span> kcal max</p>
+            </div>
+            <button class="logout-btn" onclick="logout()">Sign Out</button>
         </div>
 
         <!-- CHARTS SECTION (Issue #23) -->
@@ -135,6 +138,24 @@
             localStorage.removeItem('token');
             window.location.href = '/login';
         }
+
+        // User Profile Data Fetch
+        fetch('/api/profile', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.display_name) {
+                document.getElementById('user-name').textContent = data.display_name;
+            }
+            if (data.wellness_goal) {
+                document.getElementById('user-goal').textContent = data.wellness_goal.replace('_', ' ');
+            }
+            if (data.calorie_target) {
+                document.getElementById('user-diet').textContent = data.calorie_target;
+            }
+        })
+        .catch(err => console.error("Error fetching profile:", err));
 
         // ========== CHART INITIALIZATION (Issue #23) ==========
         let caloriesChart, sleepChart, workoutsChart, hydrationChart, moodChart;

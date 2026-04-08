@@ -4,16 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up | VitalAI</title>
-    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
-<body>
+<body class="landing-body">
     <div class="container">
-        <div class="header">
-            <h1>Create Account</h1>
-            <p>Start your wellness journey with AI</p>
+        <!-- Motivation Sidebar -->
+        <div class="auth-motivation">
+            <h2>Start your journey.</h2>
+            <p>Every log builds a smarter understanding of your body. See your data turn into actionable health insights.</p>
+            <div class="auth-stats">
+                <div class="stat-item">
+                    <span class="stat-icon">💪</span>
+                    <div class="stat-details">
+                        <h4>Workout Intensity Tracking</h4>
+                        <span>Align your exercise with your energy</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">💧</span>
+                    <div class="stat-details">
+                        <h4>Smart Hydration</h4>
+                        <span>Never forget to hit your daily goal</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">😊</span>
+                    <div class="stat-details">
+                        <h4>Mood Mapped to Habits</h4>
+                        <span>Learn what truly drives your happiness</span>
+                    </div>
+                </div>
+            </div>
         </div>
         
-        <div class="form-container">
+        <div class="form-container-wrapper">
+            <div class="header">
+                <h1>Create Account</h1>
+                <p>Welcome to VitalAI</p>
+            </div>
+            
+            <div class="form-container">
             <div id="error-message" class="error-message"></div>
             <div id="success-message" class="success-message"></div>
             
@@ -75,7 +105,8 @@
             </form>
             
             <div class="link">
-                Already have an account? <a href="login.html">Sign in</a>
+                Already have an account? <a href="/login">Sign in</a>
+            </div>
             </div>
         </div>
     </div>
