@@ -136,9 +136,9 @@ button:hover {
     margin-left: 8px;
 }
 
-/* Dashboard Specific Styles (Issue #21) */
+/* Dashboard Specific Styles */
 .dashboard-container {
-    max-width: 800px;
+    max-width: 1200px;
     margin: 0 auto;
 }
 
@@ -167,6 +167,67 @@ button:hover {
     background: #a00;
 }
 
+/* Charts Grid - NEW for dashboard-chartjs */
+.charts-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.chart-card {
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+
+.chart-card h3 {
+    color: #6a1b9a;
+    margin-bottom: 15px;
+}
+
+/* Log Forms Grid - NEW for dashboard-chartjs */
+.log-section h3 {
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    margin-left: 10px;
+}
+
+.log-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.log-card {
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    padding: 15px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.log-card h4 {
+    color: #6a1b9a;
+    margin: 0 0 10px 0;
+}
+
+.log-card input, .log-card select {
+    width: 100%;
+    margin: 5px 0;
+    padding: 8px;
+    border-radius: 8px;
+    border: 2px solid #b39ddb;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.log-card button {
+    width: 100%;
+    margin-top: 10px;
+}
+
+/* Card for weekly insight */
 .card { 
     background: rgba(255,255,255,0.95);
     border-radius: 16px; 
@@ -177,6 +238,29 @@ button:hover {
 
 .card h3 {
     color: #6a1b9a;
+    margin-top: 0;
+}
+
+.card-row {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    flex-wrap: nowrap;
+}
+
+.log-form {
+    flex: 1 1 55%;
+    min-width: 0;
+}
+
+.ai-response {
+    flex: 1 1 45%;
+    min-width: 0;
+    min-height: 72px;
+    white-space: pre-line;
+}
+
+.card-row .ai-response {
     margin-top: 0;
 }
 
@@ -191,12 +275,88 @@ button:hover {
     border-left: 4px solid #7e57c2;
     padding: 15px;
     margin-top: 15px;
-    border-radius: 8px;
+    border-radius: 10px;
     color: #4a148c;
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+    transition: opacity 420ms ease, transform 420ms ease;
+    box-shadow: 0 8px 18px rgba(74, 20, 140, 0.18);
+}
+
+.ai-response.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
 }
 
 .hidden {
     display: none;
+}
+
+.chat-card {
+    position: relative;
+}
+
+.chat-thread {
+    background: rgba(255,255,255,0.6);
+    border: 1px solid rgba(106, 27, 154, 0.2);
+    border-radius: 12px;
+    padding: 12px;
+    min-height: 160px;
+    max-height: 280px;
+    overflow-y: auto;
+    margin-top: 10px;
+    margin-bottom: 12px;
+}
+
+.chat-message {
+    max-width: 75%;
+    padding: 10px 12px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    line-height: 1.35;
+    white-space: pre-line;
+    box-shadow: 0 6px 14px rgba(74, 20, 140, 0.12);
+}
+
+.chat-user {
+    margin-left: auto;
+    background: #7e57c2;
+    color: #fff;
+}
+
+.chat-assistant {
+    margin-right: auto;
+    background: #ede7f6;
+    color: #4a148c;
+}
+
+.chat-pending {
+    opacity: 0.7;
+}
+
+.chat-input-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.chat-input-row input {
+    flex: 1 1 auto;
+}
+
+.chat-send {
+    width: auto;
+    padding: 12px 18px;
+    flex: 0 0 auto;
+}
+
+@media (max-width: 560px) {
+    .card-row {
+        flex-direction: column;
+    }
+    .ai-response {
+        width: 100%;
+    }
 }
 
 /* ========== LANDING PAGE STYLES (index.html) ========== */
@@ -303,22 +463,6 @@ button:hover {
     font-size: 12px;
 }
 
-@media (max-width: 768px) {
-    .landing-hero {
-        padding: 40px 20px;
-    }
-    .landing-hero h1 {
-        font-size: 36px;
-    }
-    .landing-buttons {
-        flex-direction: column;
-        align-items: center;
-    }
-    .landing-buttons button {
-        width: 200px;
-    }
-}
-
 /* Responsive */
 @media (max-width: 768px) {
     body {
@@ -338,8 +482,24 @@ button:hover {
     .logout-btn {
         width: 100%;
     }
+    
+    .landing-hero {
+        padding: 40px 20px;
+    }
+    
+    .landing-hero h1 {
+        font-size: 36px;
+    }
+    
+    .landing-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .landing-buttons button {
+        width: 200px;
+    }
 }
-/* Skeleton Loader for AI Notifications (Issue #22) */
 .skeleton-loader {
     background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
     background-size: 200% 100%;
@@ -352,4 +512,13 @@ button:hover {
 @keyframes skeleton-loading {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
+}
+
+@media (max-width: 560px) {
+    .card-row {
+        flex-direction: column;
+    }
+    .ai-response {
+        width: 100%;
+    }
 }
