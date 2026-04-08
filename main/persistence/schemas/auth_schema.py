@@ -34,6 +34,9 @@ class RegisterSchema(Schema):
     password = fields.Str(
         required=True, validate=Length(min=8), load_only=True
     )
+    daily_calorie_target = fields.Int(allow_none=True)
+    hydration_goal = fields.Int(allow_none=True)
+    wellness_goal = fields.Str(allow_none=True)
 
     @pre_load
     def normalize_email(self, data, **kwargs):

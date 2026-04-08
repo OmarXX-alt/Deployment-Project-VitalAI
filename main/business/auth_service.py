@@ -17,6 +17,9 @@ def register_user(
     password: str,
     jwt_secret: str,
     jwt_expiry_hours: int,
+    daily_calorie_target: int | None = None,
+    hydration_goal: int | None = None,
+    wellness_goal: str | None = None,
 ) -> tuple[dict, int]:
     """Register a new user and issue a JWT.
 
@@ -50,9 +53,9 @@ def register_user(
         "display_name": clean_display_name,
         "email": email.lower().strip(),
         "password_hash": password_hash,
-        "daily_calorie_target": None,
-        "hydration_goal": None,
-        "wellness_goal": None,
+        "daily_calorie_target": daily_calorie_target,
+        "hydration_goal": hydration_goal,
+        "wellness_goal": wellness_goal,
         "last_briefing_date": None,
         "created_at": now,
     }

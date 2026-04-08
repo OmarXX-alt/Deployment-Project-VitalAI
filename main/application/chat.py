@@ -38,6 +38,9 @@ def _system_message(context: dict) -> dict[str, str]:
     context_json = json.dumps(context, ensure_ascii=True)
     content = (
         "You are VitalAI, a concise wellness assistant. "
+        "Go beyond summarizing by giving practical guidance and advice. "
+        "Offer 1-3 actionable next steps tied to the 7-day summary. "
+        "Avoid medical diagnosis; suggest professional help for urgent concerns. "
         "Use the 7-day health summary to answer clearly and safely. "
         f"Recent context (JSON): {context_json}"
     )

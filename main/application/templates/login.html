@@ -4,16 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | VitalAI</title>
-    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
-<body>
+<body class="landing-body">
     <div class="container">
-        <div class="header">
-            <h1>VitalAI</h1>
-            <p>Your AI-powered health companion</p>
+        <!-- Motivation Sidebar -->
+        <div class="auth-motivation">
+            <h2>Welcome Back.</h2>
+            <p>Log in to uncover patterns you didn't know you had, and let AI guide your next recovery step.</p>
+            <div class="auth-stats">
+                <div class="stat-item">
+                    <span class="stat-icon">🍽️</span>
+                    <div class="stat-details">
+                        <h4>10,000+ Meals Logged</h4>
+                        <span>AI-powered macro breakdowns</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">😴</span>
+                    <div class="stat-details">
+                        <h4>Smarter Recovery</h4>
+                        <span>Correlation between sleep and mood</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">🤖</span>
+                    <div class="stat-details">
+                        <h4>Weekly AI Coaching</h4>
+                        <span>Get custom insights every 7 days</span>
+                    </div>
+                </div>
+            </div>
         </div>
-        
-        <div class="form-container">
+
+        <div class="form-container-wrapper">
+            <div class="header">
+                <h1>VitalAI</h1>
+                <p>Sign in to your health hub</p>
+            </div>
+            
+            <div class="form-container">
             <div id="error-message" class="error-message"></div>
             <div id="success-message" class="success-message"></div>
             
@@ -32,7 +62,8 @@
             </form>
             
             <div class="link">
-                Don't have an account? <a href="register.html">Sign up for free</a>
+                Don't have an account? <a href="/register">Sign up for free</a>
+            </div>
             </div>
         </div>
     </div>
@@ -62,6 +93,7 @@
             // REAL API CALL to backend
             fetch('/api/login', {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
                     'Content-Type': 'application/json'
                 },
@@ -69,10 +101,7 @@
             })
             .then(response => response.json().then(data => ({ response, data })))
             .then(({ response, data }) => {
-                if (data.token) {
-                    // Store token in localStorage
-                    localStorage.setItem('token', data.token);
-                    
+                if (response.ok) {
                     // Show success message
                     document.getElementById('success-message').textContent = '✓ Login successful! Redirecting to dashboard...';
                     
