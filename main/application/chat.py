@@ -167,7 +167,7 @@ def chat():
         history = session_doc.get("messages") or []
 
     trimmed_history = _trim_messages(history, max_messages=20)
-    
+
     # Optimize: Skip full context for lightweight requests or greetings
     if skip_context or len(message) < 15:
         context = {}
