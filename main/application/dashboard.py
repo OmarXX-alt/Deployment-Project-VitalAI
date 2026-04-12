@@ -5,7 +5,7 @@ import json
 from flask import Blueprint, current_app, g, jsonify
 
 from main.ai.gemini_client import call_gemini
-from main.business import aggregation_service
+from main.business import aggregation_service, ai_service
 from main.business.utils.aggregation import (
     get_hydration_context,
     get_meal_context,
@@ -35,52 +35,57 @@ def dashboard():
 @require_auth
 def weekly_insights():
     # TODO: [Logic-Issue-014]
-    fallback = {
-        "positives": [],
-        "concern": None,
-        "suggestions": [],
-        "error": "insight_unavailable",
-    }
     try:
         db = get_db()
+        
+        # Gather all context from each domain (even if sparse)
         meal_ctx = get_meal_context(g.user_id, db)
         workout_ctx = get_workout_context(g.user_id, db)
         sleep_ctx = get_sleep_context(g.user_id, db)
         hydration_ctx = get_hydration_context(g.user_id, db)
         mood_ctx = get_mood_context(g.user_id, db)
-
-        prompt_lines = [
-            "You are a wellness analyst. Return only valid JSON. "
-            "No explanation, no markdown.",
-            "Return exactly 2 positives, 1 concern, 3 suggestions.",
-            "JSON schema: {\"positives\": [\"...\", \"...\"], "
-            "\"concern\": \"...\", "
-            "\"suggestions\": [\"...\", \"...\", \"...\"]}",
-            "",
-            "MEALS:",
-            json.dumps(meal_ctx),
-            "WORKOUTS:",
-            json.dumps(workout_ctx),
-            "SLEEP:",
-            json.dumps(sleep_ctx),
-            "HYDRATION:",
-            json.dumps(hydration_ctx),
-            "MOOD:",
-            json.dumps(mood_ctx),
-        ]
-        prompt = "\n".join(prompt_lines)
-        response_text = call_gemini(prompt, timeout=60)
-        if not response_text:
-            return jsonify(fallback), 200
-        payload = json.loads(response_text)
-        if not isinstance(payload, dict):
-            return jsonify(fallback), 200
-        required = {"positives", "concern", "suggestions"}
-        if not required.issubset(payload.keys()):
-            return jsonify(fallback), 200
-        return jsonify(payload), 200
-    except json.JSONDecodeError:
-        return jsonify(fallback), 200
+        
+        current_app.logger.info(f"Insights - Meal: {meal_ctx}")
+        current_app.logger.info(f"Insights - Workout: {workout_ctx}")
+        current_app.logger.info(f"Insights - Sleep: {sleep_ctx}")
+        current_app.logger.info(f"Insights - Hydration: {hydration_ctx}")
+        current_app.logger.info(f"Insights - Mood: {mood_ctx}")
+        
+        # Combine all data (aggregate as much as possible)
+        aggregated_context = {
+            "meals": meal_ctx,
+            "workouts": workout_ctx,
+            "sleep": sleep_ctx,
+            "hydration": hydration_ctx,
+            "mood": mood_ctx,
+        }
+        
+        # Generate insights from whatever data is available
+        insights = ai_service.get_wellness_insights(
+            user_id=g.user_id,
+            context=aggregated_context,
+            timeout_seconds=15
+        )
+        
+        current_app.logger.info(f"Wellness Insights result: {insights}")
+        
+        # Always return insights (business layer never returns None now)
+        if insights is None:
+            # Fallback if something really goes wrong
+            current_app.logger.error("Wellness insights returned None unexpectedly")
+            return jsonify({
+                "positives": ["You're on your wellness journey"],
+                "concern": "Haven't collected much data yet",
+                "suggestions": ["Start by logging your meals", "Track your sleep patterns", "Record your mood daily"],
+                "note": "Keep logging to get better insights!"
+            }), 200
+        
+        return jsonify(insights), 200
+        
     except Exception as exc:
-        current_app.logger.warning("Weekly insights failed: %s", exc)
-        return jsonify(fallback), 200
+        current_app.logger.error(f"Weekly insights exception: {exc}", exc_info=True)
+        return jsonify({
+            "positives": ["You're building healthy habits"],
+            "concern": "Unable to analyze data right now",
+            "suggestions": ["Keep logging your health data", "Check back tomorrow", "Stay consistent with tracking"],
+        }), 200

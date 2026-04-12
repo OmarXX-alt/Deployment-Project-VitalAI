@@ -2,15 +2,7 @@ from __future__ import annotations
 
 from flask import Blueprint, current_app, g, jsonify, request
 
-from main.ai.gemini_client import (
-    build_hydration_prompt,
-    build_meal_prompt,
-    build_mood_prompt,
-    build_sleep_prompt,
-    build_workout_prompt,
-    call_gemini,
-)
-from main.business import log_service
+from main.business import ai_service, log_service
 from main.business.utils.aggregation import (
     get_hydration_context,
     get_meal_context,
@@ -75,7 +67,9 @@ def log_workout():
         validated["intensity"],
         validated.get("logged_at"),
     )
-    reaction_message = None
+    
+    # Use business layer instead of direct API calls
+    reaction = None
     try:
         db = get_db()
         context = get_workout_context(g.user_id, db)
@@ -86,14 +80,13 @@ def log_workout():
             "sets": response_body.get("sets"),
             "reps": response_body.get("reps"),
         }
-        prompt = build_workout_prompt(new_entry, context)
-        reaction_message = call_gemini(prompt)
+        reaction = ai_service.get_reaction("workout", context, new_entry, timeout_seconds=3)
     except Exception as exc:
         current_app.logger.warning("workout AI reaction failed: %s", exc)
 
-    response_body["reaction"] = {
+    response_body["reaction"] = reaction if reaction else {
         "type": "workout",
-        "message": reaction_message,
+        "message": None,
         "tags": [],
     }
     return jsonify(response_body), status
@@ -128,7 +121,9 @@ def log_meal():
         validated["meal_type"],
         validated.get("logged_at"),
     )
-    reaction_message = None
+    
+    # Use business layer instead of direct API calls
+    reaction = None
     try:
         db = get_db()
         context = get_meal_context(g.user_id, db)
@@ -138,14 +133,13 @@ def log_meal():
             "meal_type": response_body.get("meal_type"),
             "today_total_kcal": response_body.get("today_total_kcal"),
         }
-        prompt = build_meal_prompt(new_entry, context)
-        reaction_message = call_gemini(prompt)
+        reaction = ai_service.get_reaction("meal", context, new_entry, timeout_seconds=3)
     except Exception as exc:
         current_app.logger.warning("meal AI reaction failed: %s", exc)
 
-    response_body["reaction"] = {
+    response_body["reaction"] = reaction if reaction else {
         "type": "meal",
-        "message": reaction_message,
+        "message": None,
         "tags": [],
     }
     return jsonify(response_body), status
@@ -179,7 +173,9 @@ def log_sleep():
         validated["sleep_end"],
         validated["quality_score"],
     )
-    reaction_message = None
+    
+    # Use business layer instead of direct API calls
+    reaction = None
     try:
         db = get_db()
         context = get_sleep_context(g.user_id, db)
@@ -189,14 +185,13 @@ def log_sleep():
             "duration_minutes": response_body.get("duration_minutes"),
             "quality_score": response_body.get("quality_score"),
         }
-        prompt = build_sleep_prompt(new_entry, context)
-        reaction_message = call_gemini(prompt)
+        reaction = ai_service.get_reaction("sleep", context, new_entry, timeout_seconds=3)
     except Exception as exc:
         current_app.logger.warning("sleep AI reaction failed: %s", exc)
 
-    response_body["reaction"] = {
+    response_body["reaction"] = reaction if reaction else {
         "type": "sleep",
-        "message": reaction_message,
+        "message": None,
         "tags": [],
     }
     return jsonify(response_body), status
@@ -229,7 +224,9 @@ def log_hydration():
         validated["amount_ml"],
         validated.get("logged_at"),
     )
-    reaction_message = None
+    
+    # Use business layer instead of direct API calls
+    reaction = None
     try:
         db = get_db()
         context = get_hydration_context(g.user_id, db)
@@ -238,14 +235,13 @@ def log_hydration():
             "daily_total_ml": response_body.get("daily_total_ml"),
             "pct_of_goal": response_body.get("pct_of_goal"),
         }
-        prompt = build_hydration_prompt(new_entry, context)
-        reaction_message = call_gemini(prompt)
+        reaction = ai_service.get_reaction("hydration", context, new_entry, timeout_seconds=3)
     except Exception as exc:
         current_app.logger.warning("hydration AI reaction failed: %s", exc)
 
-    response_body["reaction"] = {
+    response_body["reaction"] = reaction if reaction else {
         "type": "hydration",
-        "message": reaction_message,
+        "message": None,
         "tags": [],
     }
     return jsonify(response_body), status
@@ -278,7 +274,9 @@ def log_mood():
         validated["mood_score"],
         validated.get("note"),
     )
-    reaction_message = None
+    
+    # Use business layer instead of direct API calls
+    reaction = None
     try:
         db = get_db()
         context = get_mood_context(g.user_id, db)
@@ -287,17 +285,16 @@ def log_mood():
             "note": response_body.get("note"),
             "date": response_body.get("date"),
         }
-        prompt = build_mood_prompt(new_entry, context)
-        reaction_message = call_gemini(prompt)
+        reaction = ai_service.get_reaction("mood", context, new_entry, timeout_seconds=3)
     except Exception as exc:
         current_app.logger.warning("mood AI reaction failed: %s", exc)
 
     response_body["wellness_resource"] = (
         WELLNESS_RESOURCE if validated["mood_score"] == 1 else None
     )
-    response_body["reaction"] = {
+    response_body["reaction"] = reaction if reaction else {
         "type": "mood",
-        "message": reaction_message,
+        "message": None,
         "tags": [],
     }
     return jsonify(response_body), status
