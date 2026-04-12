@@ -7,8 +7,7 @@ from bson import ObjectId
 from bson.errors import InvalidId
 from flask import Blueprint, current_app, g, jsonify, request
 
-from main.ai.gemini_client import call_gemini
-from main.business import aggregation_service
+from main.business import aggregation_service, ai_service
 from main.persistence.db import get_db
 from main.persistence.models.chat_sessions import create_chat_session
 from main.server.middleware.auth import require_auth
@@ -184,23 +183,25 @@ def chat():
             )
             context = {}
 
-    messages = [_system_message(context)] + trimmed_history
+    reply_text = None
+    try:
+        reply_text = ai_service.get_chat_response(
+            message=message,
+            history=trimmed_history,
+            context=context,
+            timeout_seconds=10,
+        )
+    except Exception as exc:
+        current_app.logger.warning("chat ai service error: %s", exc)
+
+    if not reply_text:
+        reply_text = _FALLBACK_REPLY
+
     user_message = {
         "role": "user",
         "content": message,
         "timestamp": _now(),
     }
-    messages.append(user_message)
-
-    prompt = _format_prompt(messages)
-    reply_text = None
-    try:
-        reply_text = call_gemini(prompt)
-    except Exception as exc:
-        current_app.logger.warning("chat gemini error: %s", exc)
-
-    if not reply_text:
-        reply_text = _FALLBACK_REPLY
 
     assistant_message = {
         "role": "assistant",

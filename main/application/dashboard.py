@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-import json
-
 from flask import Blueprint, current_app, g, jsonify
 
-from main.ai.gemini_client import call_gemini
 from main.business import aggregation_service, ai_service
 from main.business.utils.aggregation import (
     get_hydration_context,
@@ -37,20 +34,20 @@ def weekly_insights():
     # TODO: [Logic-Issue-014]
     try:
         db = get_db()
-        
+
         # Gather all context from each domain (even if sparse)
         meal_ctx = get_meal_context(g.user_id, db)
         workout_ctx = get_workout_context(g.user_id, db)
         sleep_ctx = get_sleep_context(g.user_id, db)
         hydration_ctx = get_hydration_context(g.user_id, db)
         mood_ctx = get_mood_context(g.user_id, db)
-        
+
         current_app.logger.info(f"Insights - Meal: {meal_ctx}")
         current_app.logger.info(f"Insights - Workout: {workout_ctx}")
         current_app.logger.info(f"Insights - Sleep: {sleep_ctx}")
         current_app.logger.info(f"Insights - Hydration: {hydration_ctx}")
         current_app.logger.info(f"Insights - Mood: {mood_ctx}")
-        
+
         # Combine all data (aggregate as much as possible)
         aggregated_context = {
             "meals": meal_ctx,
@@ -59,16 +56,16 @@ def weekly_insights():
             "hydration": hydration_ctx,
             "mood": mood_ctx,
         }
-        
+
         # Generate insights from whatever data is available
         insights = ai_service.get_wellness_insights(
             user_id=g.user_id,
             context=aggregated_context,
             timeout_seconds=15
         )
-        
+
         current_app.logger.info(f"Wellness Insights result: {insights}")
-        
+
         # Always return insights (business layer never returns None now)
         if insights is None:
             # Fallback if something really goes wrong
@@ -79,9 +76,9 @@ def weekly_insights():
                 "suggestions": ["Start by logging your meals", "Track your sleep patterns", "Record your mood daily"],
                 "note": "Keep logging to get better insights!"
             }), 200
-        
+
         return jsonify(insights), 200
-        
+
     except Exception as exc:
         current_app.logger.error(f"Weekly insights exception: {exc}", exc_info=True)
         return jsonify({

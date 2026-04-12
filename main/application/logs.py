@@ -67,7 +67,7 @@ def log_workout():
         validated["intensity"],
         validated.get("logged_at"),
     )
-    
+
     # Use business layer instead of direct API calls
     reaction = None
     try:
@@ -121,7 +121,7 @@ def log_meal():
         validated["meal_type"],
         validated.get("logged_at"),
     )
-    
+
     # Use business layer instead of direct API calls
     reaction = None
     try:
@@ -173,7 +173,7 @@ def log_sleep():
         validated["sleep_end"],
         validated["quality_score"],
     )
-    
+
     # Use business layer instead of direct API calls
     reaction = None
     try:
@@ -224,7 +224,7 @@ def log_hydration():
         validated["amount_ml"],
         validated.get("logged_at"),
     )
-    
+
     # Use business layer instead of direct API calls
     reaction = None
     try:
@@ -274,7 +274,7 @@ def log_mood():
         validated["mood_score"],
         validated.get("note"),
     )
-    
+
     # Use business layer instead of direct API calls
     reaction = None
     try:
