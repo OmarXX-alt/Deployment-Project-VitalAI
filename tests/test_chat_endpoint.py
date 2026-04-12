@@ -146,6 +146,11 @@ def test_chat_invalid_session_id(client, monkeypatch):
     assert data["error"] == "invalid_session_id"
 
 
+def mock_build_context(*args, **kwargs):
+    """Mock context builder that tracks calls."""
+    return {"ctx": "ok"}
+
+
 def test_chat_lightweight_mode(client, monkeypatch):
     """Test lightweight mode skips context loading for faster responses."""
     fake_db = FakeDB()
@@ -182,14 +187,14 @@ def test_chat_short_message_skips_context(client, monkeypatch):
 
     context_called = []
 
-    def mock_build_context(*args, **kwargs):
+    def track_context(*args, **kwargs):
         context_called.append(True)
         return {"ctx": "ok"}
 
     monkeypatch.setattr(
         chat_module.aggregation_service,
         "build_context",
-        mock_build_context,
+        track_context,
     )
     monkeypatch.setattr(
         chat_module, "call_gemini", lambda prompt: "Hi there!"
@@ -203,6 +208,5 @@ def test_chat_short_message_skips_context(client, monkeypatch):
         headers=_auth_headers(client, user_id),
         json={"message": "Hi"},
     )
-
     assert response.status_code == 200
-    assert len(context_called) == 0  # Short message skips context
+    assert len(context_called) == 0  # Context not loaded for short message
