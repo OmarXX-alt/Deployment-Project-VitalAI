@@ -144,3 +144,69 @@ def test_chat_invalid_session_id(client, monkeypatch):
     assert response.status_code == 400
     data = response.get_json()
     assert data["error"] == "invalid_session_id"
+
+
+def test_chat_lightweight_mode(client, monkeypatch):
+    """Test lightweight mode skips context loading for faster responses."""
+    fake_db = FakeDB()
+    monkeypatch.setattr(chat_module, "get_db", lambda: fake_db)
+    
+    context_called = []
+    
+    def mock_build_context(*args, **kwargs):
+        context_called.append(True)
+        return {"ctx": "ok"}
+    
+    monkeypatch.setattr(
+        chat_module.aggregation_service,
+        "build_context",
+        mock_build_context,
+    )
+    monkeypatch.setattr(
+        chat_module, "call_gemini", lambda prompt: "Response"
+    )
+
+    user_id = str(ObjectId())
+    
+    # Test lightweight mode - should skip context
+    response = client.post(
+        "/api/chat",
+        headers=_auth_headers(client, user_id),
+        json={"message": "Hi", "lightweight": True},
+    )
+    
+    assert response.status_code == 200
+    assert len(context_called) == 0  # Context not loaded in lightweight mode
+
+
+def test_chat_short_message_skips_context(client, monkeypatch):
+    """Test that short messages (greetings) skip context loading."""
+    fake_db = FakeDB()
+    monkeypatch.setattr(chat_module, "get_db", lambda: fake_db)
+    
+    context_called = []
+    
+    def mock_build_context(*args, **kwargs):
+        context_called.append(True)
+        return {"ctx": "ok"}
+    
+    monkeypatch.setattr(
+        chat_module.aggregation_service,
+        "build_context",
+        mock_build_context,
+    )
+    monkeypatch.setattr(
+        chat_module, "call_gemini", lambda prompt: "Hi there!"
+    )
+
+    user_id = str(ObjectId())
+    
+    # Test short message - should skip context
+    response = client.post(
+        "/api/chat",
+        headers=_auth_headers(client, user_id),
+        json={"message": "Hi"},
+    )
+    
+    assert response.status_code == 200
+    assert len(context_called) == 0  # Short message skips context
