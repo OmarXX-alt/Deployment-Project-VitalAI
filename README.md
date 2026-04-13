@@ -35,9 +35,7 @@ VitalAI is a health tracker where **AI reacts instantly** when you log workouts,
 | Mood Check-in | Reactive AI | Done |
 | Dashboard & Trends | No | Done |
 | AI Wellness Insights | On-demand | Done |
-| AI Goal Coach | Extension | Not Done |
-| AI Chat Assistant | Extension | Not Done |
-| Daily Morning Briefing | Proactive | Not Done |
+| AI Chat Assistant | Extension | Done |
 
 **Note:** Extensions were planned but out of scope for final delivery. We prioritized MVP Core + CI/CD stability.
 
@@ -128,11 +126,7 @@ pytest suite (15+ tests)
 CI/CD pipeline (GitHub Actions + Render)
 Frontend: 5 forms + dashboard
 Live deployment verified
-
-Not Implemented (Extensions)
-AI Goal Coach
 AI Chat Assistant
-Daily Morning Briefing
 
 Known Limitations
 Render cold start delay
