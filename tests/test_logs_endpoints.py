@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 import jwt
 
 from main.application import logs as logs_module
+from main.business import ai_service
 
 
 def _make_token(client, user_id="user-123"):
@@ -22,10 +23,8 @@ def _auth_headers(client, user_id="user-123"):
 
 
 def _setup_ai(monkeypatch):
+    """Mock database context getters."""
     monkeypatch.setattr(logs_module, "get_db", lambda: object())
-    monkeypatch.setattr(
-        logs_module, "call_gemini", lambda prompt: "AI response"
-    )
     monkeypatch.setattr(
         logs_module, "get_meal_context", lambda *args: {}
     )
@@ -43,8 +42,20 @@ def _setup_ai(monkeypatch):
     )
 
 
+def _mock_ai_reaction(monkeypatch, reaction_type="neutral", message="Good job!"):
+    """Mock ai_service.get_reaction to return a reaction dict."""
+    def fake_reaction(*args, **kwargs):
+        return {
+            "type": reaction_type,
+            "message": message,
+            "tags": ["tracking"],
+        }
+    monkeypatch.setattr(ai_service, "get_reaction", fake_reaction)
+
+
 def test_log_meal_success(client, monkeypatch):
     _setup_ai(monkeypatch)
+    _mock_ai_reaction(monkeypatch, "positive", "Great nutrition choice!")
 
     def fake_save_meal_log(user_id, meal_name, calories, meal_type, logged_at):
         return (
@@ -73,11 +84,14 @@ def test_log_meal_success(client, monkeypatch):
 
     assert response.status_code == 201
     data = response.get_json()
-    assert data["reaction"]["message"] == "AI response"
+    assert data["reaction"]["type"] == "positive"
+    assert data["reaction"]["message"] == "Great nutrition choice!"
+    assert data["reaction"]["tags"] == ["tracking"]
 
 
 def test_log_workout_success(client, monkeypatch):
     _setup_ai(monkeypatch)
+    _mock_ai_reaction(monkeypatch, "positive", "Excellent workout!")
 
     def fake_save_workout_log(
         user_id,
@@ -115,11 +129,13 @@ def test_log_workout_success(client, monkeypatch):
 
     assert response.status_code == 201
     data = response.get_json()
-    assert data["reaction"]["message"] == "AI response"
+    assert data["reaction"]["type"] == "positive"
+    assert data["reaction"]["message"] == "Excellent workout!"
 
 
 def test_log_sleep_success(client, monkeypatch):
     _setup_ai(monkeypatch)
+    _mock_ai_reaction(monkeypatch, "positive", "Good sleep!")
     start = datetime.now(timezone.utc) - timedelta(hours=7)
     end = datetime.now(timezone.utc)
 
@@ -127,7 +143,7 @@ def test_log_sleep_success(client, monkeypatch):
         return (
             {
                 "sleep_start": sleep_start.isoformat(),
-                "sleep_end": sleep_end.isoformat(),
+                "sleep_end": end.isoformat(),
                 "duration_minutes": 420,
                 "quality_score": quality_score,
             },
@@ -150,11 +166,13 @@ def test_log_sleep_success(client, monkeypatch):
 
     assert response.status_code == 201
     data = response.get_json()
-    assert data["reaction"]["message"] == "AI response"
+    assert data["reaction"]["type"] == "positive"
+    assert data["reaction"]["message"] == "Good sleep!"
 
 
 def test_log_hydration_success(client, monkeypatch):
     _setup_ai(monkeypatch)
+    _mock_ai_reaction(monkeypatch, "neutral", "Keep hydrating!")
 
     def fake_save_hydration_log(user_id, amount_ml, logged_at):
         return (
@@ -178,11 +196,14 @@ def test_log_hydration_success(client, monkeypatch):
 
     assert response.status_code == 201
     data = response.get_json()
-    assert data["reaction"]["message"] == "AI response"
+    assert data["reaction"]["type"] == "neutral"
+    assert data["reaction"]["message"] == "Keep hydrating!"
+    assert data["reaction"]["tags"] == ["tracking"]
 
 
 def test_log_mood_success(client, monkeypatch):
     _setup_ai(monkeypatch)
+    _mock_ai_reaction(monkeypatch, "neutral", "I hear you, things will improve.")
 
     def fake_save_mood_log(user_id, mood_score, note):
         return (
@@ -206,5 +227,6 @@ def test_log_mood_success(client, monkeypatch):
 
     assert response.status_code == 201
     data = response.get_json()
-    assert data["reaction"]["message"] == "AI response"
+    assert data["reaction"]["type"] == "neutral"
+    assert data["reaction"]["message"] == "I hear you, things will improve."
     assert data["wellness_resource"] is not None

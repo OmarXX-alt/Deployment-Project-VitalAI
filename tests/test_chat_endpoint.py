@@ -6,6 +6,7 @@ import jwt
 from bson import ObjectId
 
 from main.application import chat as chat_module
+from main.business import ai_service
 
 
 def _make_token(client, user_id):
@@ -73,8 +74,12 @@ def test_chat_creates_session(client, monkeypatch):
         "build_context",
         lambda *args, **kwargs: {"ctx": "ok"},
     )
+
+    def fake_chat_response(*args, **kwargs):
+        return "Hello"
+
     monkeypatch.setattr(
-        chat_module, "call_gemini", lambda prompt: "Hello"
+        ai_service, "get_chat_response", fake_chat_response
     )
 
     user_id = str(ObjectId())
@@ -102,8 +107,12 @@ def test_chat_reuses_session(client, monkeypatch):
         "build_context",
         lambda *args, **kwargs: {"ctx": "ok"},
     )
+
+    def fake_chat_response_first(*args, **kwargs):
+        return "First"
+
     monkeypatch.setattr(
-        chat_module, "call_gemini", lambda prompt: "First"
+        ai_service, "get_chat_response", fake_chat_response_first
     )
 
     user_id = str(ObjectId())
@@ -114,8 +123,11 @@ def test_chat_reuses_session(client, monkeypatch):
     )
     session_id = first.get_json()["session_id"]
 
+    def fake_chat_response_second(*args, **kwargs):
+        return "Second"
+
     monkeypatch.setattr(
-        chat_module, "call_gemini", lambda prompt: "Second"
+        ai_service, "get_chat_response", fake_chat_response_second
     )
 
     second = client.post(
@@ -144,3 +156,72 @@ def test_chat_invalid_session_id(client, monkeypatch):
     assert response.status_code == 400
     data = response.get_json()
     assert data["error"] == "invalid_session_id"
+
+
+def mock_build_context(*args, **kwargs):
+    """Mock context builder that tracks calls."""
+    return {"ctx": "ok"}
+
+
+def test_chat_lightweight_mode(client, monkeypatch):
+    """Test lightweight mode skips context loading for faster responses."""
+    fake_db = FakeDB()
+    monkeypatch.setattr(chat_module, "get_db", lambda: fake_db)
+
+    monkeypatch.setattr(
+        chat_module.aggregation_service,
+        "build_context",
+        mock_build_context,
+    )
+
+    def fake_chat_response_lightweight(*args, **kwargs):
+        return "Response"
+
+    monkeypatch.setattr(
+        ai_service, "get_chat_response", fake_chat_response_lightweight
+    )
+
+    user_id = str(ObjectId())
+
+    # Test lightweight mode - should skip context
+    response = client.post(
+        "/api/chat",
+        headers=_auth_headers(client, user_id),
+        json={"message": "Hi", "lightweight": True},
+    )
+
+    assert response.status_code == 200
+    assert response.get_json()["reply"] == "Response"
+
+
+def test_chat_short_message_skips_context(client, monkeypatch):
+    """Test that short messages (greetings) skip context loading."""
+    fake_db = FakeDB()
+    monkeypatch.setattr(chat_module, "get_db", lambda: fake_db)
+
+    def track_context(*args, **kwargs):
+        return {"ctx": "ok"}
+
+    monkeypatch.setattr(
+        chat_module.aggregation_service,
+        "build_context",
+        track_context,
+    )
+
+    def fake_chat_response_short(*args, **kwargs):
+        return "Hi there!"
+
+    monkeypatch.setattr(
+        ai_service, "get_chat_response", fake_chat_response_short
+    )
+
+    user_id = str(ObjectId())
+
+    # Test short message
+    response = client.post(
+        "/api/chat",
+        headers=_auth_headers(client, user_id),
+        json={"message": "Hi"},
+    )
+    assert response.status_code == 200
+    assert response.get_json()["reply"] == "Hi there!"
