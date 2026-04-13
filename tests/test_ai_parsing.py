@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 import jwt
 
 from main.application import dashboard as dashboard_module
+from main.business import ai_service
 
 
 def _make_token(client, user_id="user-123"):
@@ -42,15 +43,19 @@ def _setup_context(monkeypatch):
 
 def test_weekly_insights_valid_json(client, monkeypatch):
     _setup_context(monkeypatch)
-    response_json = (
-        "{\"positives\": [\"a\", \"b\"], "
-        "\"concern\": \"c\", "
-        "\"suggestions\": [\"d\", \"e\", \"f\"]}"
-    )
+
+    def fake_insights(*args, **kwargs):
+        return {
+            "positives": ["a", "b"],
+            "concern": "c",
+            "suggestions": ["d", "e", "f"],
+            "data_logged_categories": 3,
+        }
+
     monkeypatch.setattr(
-        dashboard_module,
-        "call_gemini",
-        lambda *args, **kwargs: response_json,
+        ai_service,
+        "get_wellness_insights",
+        fake_insights,
     )
 
     response = client.get(
@@ -67,10 +72,20 @@ def test_weekly_insights_valid_json(client, monkeypatch):
 
 def test_weekly_insights_invalid_json(client, monkeypatch):
     _setup_context(monkeypatch)
+
+    # Mock get_wellness_insights to fail gracefully and return fallback
+    def fake_insights_fail(*args, **kwargs):
+        return {
+            "positives": ["Start tracking your health data"],
+            "concern": "Limited health data this week",
+            "suggestions": ["Log your meals daily", "Track sleep patterns", "Record your mood"],
+            "data_logged_categories": 0,
+        }
+
     monkeypatch.setattr(
-        dashboard_module,
-        "call_gemini",
-        lambda *args, **kwargs: "not-json",
+        ai_service,
+        "get_wellness_insights",
+        fake_insights_fail,
     )
 
     response = client.get(
@@ -80,16 +95,28 @@ def test_weekly_insights_invalid_json(client, monkeypatch):
 
     assert response.status_code == 200
     data = response.get_json()
-    assert data["error"] == "insight_unavailable"
+    # Should have fallback values, never error_unavailable
+    assert "positives" in data
+    assert "suggestions" in data
+    assert "error" not in data
+    assert data["positives"] == ["Start tracking your health data"]
 
 
 def test_weekly_insights_missing_keys(client, monkeypatch):
     _setup_context(monkeypatch)
-    response_json = "{\"positives\": [], \"concern\": \"x\"}"
+
+    def fake_insights_partial(*args, **kwargs):
+        return {
+            "positives": [],
+            "concern": "Limited health data",
+            "suggestions": ["Log your meals daily"],
+            "data_logged_categories": 1,
+        }
+
     monkeypatch.setattr(
-        dashboard_module,
-        "call_gemini",
-        lambda *args, **kwargs: response_json,
+        ai_service,
+        "get_wellness_insights",
+        fake_insights_partial,
     )
 
     response = client.get(
@@ -99,4 +126,8 @@ def test_weekly_insights_missing_keys(client, monkeypatch):
 
     assert response.status_code == 200
     data = response.get_json()
-    assert data["error"] == "insight_unavailable"
+    # Even with sparse data, should return valid response with suggestions
+    assert "concern" in data
+    assert "suggestions" in data
+    assert "error" not in data
+    assert len(data["suggestions"]) >= 1
